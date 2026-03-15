@@ -1,0 +1,89 @@
+{
+  "name": "logicanchor",
+  "displayName": "LogicAnchor",
+  "description": "The persistent context layer for complex codebases.",
+  "version": "0.0.1",
+  "publisher": "bilalmlkdev",
+  "icon": "resources/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/byllzz/logicanchor"
+  },
+  "keywords": [
+    "documentation",
+    "context",
+    "notes",
+    "architecture",
+    "registry"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:logicAnchorView"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "logicanchor-sidebar",
+          "title": "LogicAnchor",
+          "icon": "resources/logicanchor.svg"
+        }
+      ]
+    },
+    "views": {
+      "logicanchor-sidebar": [
+        {
+          "type": "webview",
+          "id": "logicAnchorView",
+          "name": "Insight Registry"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "logicanchor.addNote",
+        "title": "LogicAnchor: Pin Insight to Line"
+      },
+      {
+        "command": "logicanchor.clearAll",
+        "title": "LogicAnchor: Clear All Workspace Insights",
+        "category": "LogicAnchor"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "logicanchor.addNote",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "logicanchor.addNote",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "eslint": "^8.0.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.0"
+  }
+}
