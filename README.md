@@ -52,29 +52,33 @@ By anchoring insights, design decisions, and logic explanations to **specific li
   Write rich insights using **full Markdown support**, including code blocks, lists, and formatting.
 
 ---
+##  Usage
 
-## Usages
+### 1. Instant Context Anchoring
+**Right-click any line** or press `Ctrl + Alt + A` to attach architectural decisions.
 
-<p>
-  <strong>Instant Context Anchoring:</strong> Right-click any line to attach architectural
-  decisions or complex logic explanations. Insights are pinned to the specific line,
-  ensuring the "Why" behind your code is never lost.
-</p>
-<video src="media/demo-add-note.mp4" width="100%" autoplay loop muted></video>
-<br>
-<p>
-  <strong>One-Click Access:</strong> Launch the <strong>LogicAnchor Insight Registry</strong>
-  directly from the Activity Bar. This sidebar provides a birds-eye view of your
-  project's documentation, instantly syncing all anchored notes into a searchable,
-  interactive list.
-</p>
- <video src="media/demo-sidebar-open.mp4" width="100%" autoplay loop muted></video>
-<p>
-  <strong>Centralized Registry:</strong> Access every architectural decision across
-  your entire workspace in one unified view. Click any insight to instantly jump
-  to the exact file and line where the logic is anchored.
-</p>
-<video src="media/demo-goto-location.mp4" width="100%" autoplay loop muted></video>
+<video src="./media/demo-add-note.mp4" width="100%"  muted loop autoplay>
+  <source src="./media/demo-add-note.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+---
+
+### 2. One-Click Access
+Launch the **LogicAnchor Insight Registry** directly from the Activity Bar.
+
+<video src="./media/demo-sidebar-open.mp4" width="100%"  muted loop autoplay>
+  <source src="./media/demo-sidebar-open.mp4" type="video/mp4">
+</video>
+
+---
+
+### 3. Centralized Registry
+Access every architectural decision across your entire workspace.
+
+<video src="./media/demo-goto-location.mp4" width="100%"  muted loop autoplay>
+  <source src="./media/demo-goto-location.mp4" type="video/mp4">
+</video>
 ---
 
 ##  Insight Registry
@@ -209,6 +213,9 @@ Distributed under the **MIT License**.
 See `LICENSE` for more information.
 
 ---
+---
+
+*Created by [Bilal Malik (byllzz)](https://github.com/byllzz)*
 
 <p align="center">
 Built for developers who refuse to lose context.
