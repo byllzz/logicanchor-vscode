@@ -57,28 +57,20 @@ By anchoring insights, design decisions, and logic explanations to **specific li
 ### 1. Instant Context Anchoring
 **Right-click any line** or press `Ctrl + Alt + A` to attach architectural decisions.
 
-<video src="./media/demo-add-note.mp4" width="100%"  muted loop autoplay>
-  <source src="./media/demo-add-note.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
+![Demo Add Note](media/demo-add-note.gif)
 ---
 
 ### 2. One-Click Access
 Launch the **LogicAnchor Insight Registry** directly from the Activity Bar.
 
-<video src="./media/demo-sidebar-open.mp4" width="100%"  muted loop autoplay>
-  <source src="./media/demo-sidebar-open.mp4" type="video/mp4">
-</video>
+![Demo Sidebar Open](media/demo-sidebar-open.gif)
 
 ---
 
 ### 3. Centralized Registry
 Access every architectural decision across your entire workspace.
 
-<video src="./media/demo-goto-location.mp4" width="100%"  muted loop autoplay>
-  <source src="./media/demo-goto-location.mp4" type="video/mp4">
-</video>
+![Demo Goto Location](media/demo-goto-location.gif)
 ---
 
 ##  Insight Registry
