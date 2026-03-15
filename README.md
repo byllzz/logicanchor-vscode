@@ -12,7 +12,7 @@
   <a href="https://github.com/byllzz">
     <img src="https://img.shields.io/badge/Author-Bilal%20Malik-9B72FF.svg?style=flat" />
   </a>
-  <a href="https://github.com/byllzz/logicAnchor/releases">
+  <a href="https://github.com/byllzz/logicAnchor-vscode/releases">
     <img src="https://img.shields.io/badge/Latest%20Release-1.0.0-9B72FF.svg?style=flat" />
   </a>
 </p>
