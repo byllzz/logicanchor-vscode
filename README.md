@@ -23,35 +23,22 @@ Pin the <b>“Why”</b> behind your code directly inside your editor.
 
 ---
 Instead of cluttering your files with massive comment blocks, LogicAnchor introduces a **structured documentation layer** that lives exactly where your logic does.
-
 By anchoring insights, design decisions, and logic explanations to **specific lines of code**, you ensure that the **“Why” behind your implementation is never lost over time**.
 
 ---
+## Features
 
-# Features
-
-- **Auto-Anchor Insights**
-  Save a thought or explanation to a specific line using the **context menu**.
-
-- **Smart Gutter Icons**
-  Anchors appear directly in the **editor gutter**, showing exactly where deep explanations exist.
-
-- **Hover Tooltips**
-  Hover over any anchored line to instantly view the insight rendered in **Markdown**.
-
-- **Insight Registry**
-  A dedicated **sidebar panel** where you can browse, search, and manage all project insights.
-
-- **Deep Linking**
-  Clicking an insight in the sidebar instantly **opens the file and jumps to the anchored line**.
-
-- **Theme Adaptive UI**
-  Automatically adapts to your **VS Code theme** including Dark, Light, and High Contrast modes.
-
-- **Markdown Documentation**
-  Write rich insights using **full Markdown support**, including code blocks, lists, and formatting.
+- Save thoughts or explanations directly to a specific line using the **context menu**.
+- Anchors appear in the **editor gutter**, making it easy to see where deeper insights exist in the code.
+- Hover over any anchored line to instantly view the insight rendered as **Markdown**.
+- Browse, search, and manage all saved insights from a dedicated **sidebar registry panel**.
+- Clicking an insight automatically **opens the file and jumps to the exact anchored line**.
+- **Smart Highlight:** Temporarily highlight the line with a subtle glow, guiding your eyes exactly to the relevant code.
+- The UI automatically adapts to your **VS Code theme** (Dark, Light, and High Contrast).
+- Write rich explanations using **full Markdown support**, including code blocks, lists, and formatting.
 
 ---
+
 ##  Usage
 
 ### 1. Instant Context Anchoring

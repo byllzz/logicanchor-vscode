@@ -18,20 +18,22 @@ class StorageManager {
     }
   }
 
-  saveNote(fileRelativePath, line, content) {
+  // 0.0.2 - Updated to include category support
+  saveNote(fileRelativePath, line, content, category = 'Logic') {
     let data = this.getAllNotes();
     if (!data[fileRelativePath]) data[fileRelativePath] = {};
 
     data[fileRelativePath][line] = {
       content,
-      author: vscode.env.machineId, // Anonymous but unique
+      category, // Added for v0.0.2
+      author: vscode.env.machineId,
       timestamp: Date.now(),
     };
 
-    fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+    this.saveToDisk(data);
   }
 
-  // This method allows  to delete a note
+  // This method allows to delete a note
   deleteNote(fileRelativePath, line) {
     let data = this.getAllNotes();
     if (data[fileRelativePath] && data[fileRelativePath][line]) {
@@ -42,7 +44,7 @@ class StorageManager {
         delete data[fileRelativePath];
       }
 
-      fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+      this.saveToDisk(data);
       return true;
     }
     return false;
@@ -62,12 +64,24 @@ class StorageManager {
   clearAllNotes() {
     try {
       const emptyData = {};
-      fs.writeFileSync(this.storagePath, JSON.stringify(emptyData, null, 2));
+      this.saveToDisk(emptyData);
       return true;
     } catch (error) {
       console.error('Failed to clear notes:', error);
       return false;
     }
+  }
+
+  // Helper to keep code clean
+  saveToDisk(data) {
+    fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
+  }
+
+  // 0.0.2 - New feature for Smart Line Tracking
+  updateFileNotes(filePath, fileNotes) {
+    const allNotes = this.getAllNotes();
+    allNotes[filePath] = fileNotes;
+    this.saveToDisk(allNotes);
   }
 }
 

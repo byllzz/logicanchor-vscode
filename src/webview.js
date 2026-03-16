@@ -17,6 +17,10 @@ function getSidebarContent(webview, extensionUri, notes) {
             const safeContent = encodeURIComponent(note.content);
             const fileName = file.split('/').pop();
 
+            // 0.0.2 - Support for Categories
+            const category = note.category || 'Logic';
+            const catClass = `cat-${category.toLowerCase().replace(' ', '-')}`;
+
             return `
                 <div class="note-card" onclick="openFile('${file}', ${line})">
                     <div class="note-header">
@@ -27,6 +31,7 @@ function getSidebarContent(webview, extensionUri, notes) {
                                 </div>
                                 <span class="file-name">${fileName}</span>
                                 <span class="line-badge">Ln ${parseInt(line) + 1}</span>
+                                <span class="cat-badge ${catClass}">${category}</span>
                             </div>
                             <span class="time-stamp">${new Date(note.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -216,6 +221,7 @@ function getSidebarContent(webview, extensionUri, notes) {
                     display: flex;
                     align-items: center;
                     gap: 8px;
+                    flex-wrap: wrap; /* Helps if filename is long */
                 }
 
                 .icon-wrapper {
@@ -238,6 +244,22 @@ function getSidebarContent(webview, extensionUri, notes) {
                     padding: 2px 6px;
                     border-radius: 10px;
                 }
+
+                /* 0.0.2 - Category Badge Styles */
+                .cat-badge {
+                    font-size: 9px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                    border: 1px solid currentColor;
+                    opacity: 0.85;
+                }
+                .cat-logic { color: var(--vscode-descriptionForeground); }
+                .cat-bug-fix { color: var(--vscode-testing-iconFailed, #f14c4c); }
+                .cat-warning { color: var(--vscode-problemsWarningIcon-foreground, #cca700); }
+                .cat-todo { color: var(--vscode-textLink-foreground, #3794ff); }
+                .cat-optimization { color: var(--vscode-testing-iconPassed, #73c991); }
 
                 .time-stamp {
                     font-size: 11px;
@@ -347,7 +369,7 @@ function getSidebarContent(webview, extensionUri, notes) {
                 }
                 renderMarkdown();
 
-                // Search Logic
+                // Search Logic (Updated to ensure it searches titles, text, and categories)
                 document.getElementById('search-bar').addEventListener('input', (e) => {
                     const term = e.target.value.toLowerCase();
                     document.querySelectorAll('.note-card').forEach(card => {

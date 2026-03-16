@@ -1,8 +1,8 @@
 {
   "name": "logicanchor",
   "displayName": "LogicAnchor",
-  "description": "The persistent context layer for complex codebases.",
-  "version": "0.0.1",
+  "description": "Smart, persistent context layer with line-tracking, categories, and inline ghost previews for complex codebases.",
+  "version": "0.0.2",
   "publisher": "bilalmlkdev",
   "icon": "resources/logo.png",
   "repository": {
@@ -14,13 +14,18 @@
     "context",
     "notes",
     "architecture",
+    "productivity",
+    "bookmarks",
+    "knowledge-base",
     "registry"
   ],
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Visualization",
+    "Productivity"
   ],
   "activationEvents": [
     "onView:logicAnchorView"

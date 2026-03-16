@@ -1,13 +1,7 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg fill="#000000" height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 viewBox="0 0 512.043 512.043" xml:space="preserve">
-<g>
-	<g>
-		<path d="M415.499,319.574L127.947,6.934C114.788-7.373,90.912,1.938,90.912,21.376V490.71c0,11.782,9.551,21.333,21.333,21.333
-			h85.333c11.782,0,21.333-9.551,21.333-21.333V290.871L320.74,405.566c7.888,8.885,21.516,9.613,30.306,1.619l63.104-57.387
-			C422.902,341.841,423.507,328.281,415.499,319.574z M338.313,361.095L213.532,220.546c-13.028-14.674-37.287-5.459-37.287,14.164
-			v234.667h-42.667V76.084l235.993,256.583L338.313,361.095z"/>
-	</g>
-</g>
-</svg>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
+<svg fill="#000000" height="128px" width="128px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512.003 512.003" xml:space="preserve">
+<g id="SVGRepo_bgCarrier" stroke-width="0"/>
+<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="SVGRepo_iconCarrier"> <g> <g> <path d="M415.491,319.533L127.917,6.893c-5.952-6.485-15.253-8.619-23.445-5.44c-8.192,3.2-13.589,11.093-13.589,19.883v469.333 c0,11.776,9.536,21.333,21.333,21.333h85.333c11.797,0,21.333-9.557,21.333-21.333V290.84l101.803,114.688 c3.797,4.267,9.131,6.848,14.827,7.147c5.973,0.363,11.285-1.685,15.488-5.525l63.125-57.387c4.224-3.819,6.72-9.173,6.976-14.848 C421.336,329.261,419.331,323.715,415.491,319.533z"/> </g> </g> </g>
+</svg>
