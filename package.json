@@ -28,7 +28,7 @@
     "Productivity"
   ],
   "activationEvents": [
-    "onView:logicAnchorView",
+    "onView:logicAnchorView"
   ],
   "main": "./src/extension.js",
   "contributes": {
