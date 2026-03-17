@@ -372,73 +372,80 @@ function getSidebarContent(webview, extensionUri, notes) {
             <div id="notes-container">
                 ${notesListHtml || '<div class="empty-state">No context insights found.<br>Right-click a line to pin a thought.</div>'}
             </div>
+         <script type="module">
+    import { marked } from '${markedJsUri}';
+    const vscode = acquireVsCodeApi();
 
-            <script type="module">
-                import { marked } from '${markedJsUri}';
-                const vscode = acquireVsCodeApi();
+    //  Attaching functions to window immediately so HTML can see them
+    window.showToast = (message, type = 'success') => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + type;
+        toast.innerHTML = '<span>' + message + '</span>';
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 2800);
+    };
 
-                function showToast(message, type = 'success') {
-                    const container = document.getElementById('toast-container');
-                    const toast = document.createElement('div');
-                    toast.className = 'toast ' + type;
-                    toast.innerHTML = '<span>' + message + '</span>';
-                    container.appendChild(toast);
-                    setTimeout(() => {
-                        toast.classList.add('fade-out');
-                        setTimeout(() => toast.remove(), 300);
-                    }, 2800);
-                }
+    window.openFile = (file, line, isOrphan) => {
+        if (isOrphan) {
+            window.showToast("Note is orphaned. Use the re-anchor button to fix it.", "warning");
+            // still send the message so the user can see the file
+        }
+        vscode.postMessage({ command: 'openFile', file: file, line: line });
+    };
 
-                window.addEventListener('message', event => {
-                    const message = event.data;
-                    if (message.command === 'showToast') {
-                        showToast(message.text, message.type);
-                    }
-                });
+    window.deleteNote = (event, file, line) => {
+        event.preventDefault();
+        event.stopPropagation(); // Prevents openFile from firing
+        vscode.postMessage({ command: 'deleteNote', file: file, line: line });
+    };
 
-                function renderMarkdown() {
-                    document.querySelectorAll('.note-content').forEach(el => {
-                        const rawData = el.getAttribute('data-raw');
-                        if (rawData) el.innerHTML = marked.parse(decodeURIComponent(rawData));
-                    });
-                }
-                renderMarkdown();
+    window.reanchorNote = (event, file, oldLine) => {
+        event.preventDefault();
+        event.stopPropagation();
+        vscode.postMessage({
+            command: 'reanchorNote',
+            file: file,
+            oldLine: oldLine
+        });
+    };
 
-                // Search Logic
-                document.getElementById('search-bar').addEventListener('input', (e) => {
-                    const term = e.target.value.toLowerCase();
-                    document.querySelectorAll('.note-card').forEach(card => {
-                        card.style.display = card.innerText.toLowerCase().includes(term) ? 'block' : 'none';
-                    });
-                });
+    // 2. Handle incoming messages
+    window.addEventListener('message', event => {
+        const message = event.data;
+        if (message.command === 'showToast') {
+            window.showToast(message.text, message.type);
+        }
+    });
 
-                // Action Buttons
-                document.getElementById('refresh-btn').onclick = () => vscode.postMessage({ command: 'refresh' });
-                document.getElementById('clear-all-btn').onclick = () => vscode.postMessage({ command: 'clearAll' });
+    // 3. Initial Rendering
+    function renderMarkdown() {
+        document.querySelectorAll('.note-content').forEach(el => {
+            const rawData = el.getAttribute('data-raw');
+            if (rawData) el.innerHTML = marked.parse(decodeURIComponent(rawData));
+        });
+    }
+    renderMarkdown();
 
-                // Navigation & Management
-                window.openFile = (file, line, isOrphan) => {
-                    if (isOrphan) {
-                        showToast("Note is orphaned. Put cursor on a new line and click the re-anchor button.", "warning");
-                    }
-                    vscode.postMessage({ command: 'openFile', file, line });
-                };
+    // 4. Search Logic
+    document.getElementById('search-bar').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.note-card').forEach(card => {
+            card.style.display = card.innerText.toLowerCase().includes(term) ? 'block' : 'none';
+        });
+    });
 
-                window.deleteNote = (event, file, line) => {
-                    event.stopPropagation();
-                    vscode.postMessage({ command: 'deleteNote', file, line });
-                };
+    // 5. Action Buttons (Check if they exist before adding listeners)
+    const refreshBtn = document.getElementById('refresh-btn');
+    if(refreshBtn) refreshBtn.onclick = () => vscode.postMessage({ command: 'refresh' });
 
-                // NEW: Re-anchor logic for v0.0.3
-                window.reanchorNote = (event, file, oldLine) => {
-                    event.stopPropagation();
-                    vscode.postMessage({
-                        command: 'reanchorNote',
-                        file: file,
-                        oldLine: oldLine
-                    });
-                };
-            </script>
+    const clearBtn = document.getElementById('clear-all-btn');
+    if(clearBtn) clearBtn.onclick = () => vscode.postMessage({ command: 'clearAll' });
+
+</script>
         </body>
         </html>
     `;
