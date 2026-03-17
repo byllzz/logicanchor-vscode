@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+
+---
+
+## [0.0.4] - 2026-03-17 (In-Development)
+
+###  Fixed (Current)
+* **Webview Scoping:** Resolved an issue where Sidebar buttons (Delete, Re-anchor) were unresponsive due to module scoping.
+* **Navigation:** Fixed a bug preventing the editor from jumping to the correct line when clicking a note card.
+* **Event Bubbling:** Fixed a conflict where clicking "Delete" would also trigger "Open File."
+
+###  Upcoming Features (To Be Added)
+* [ ] *Feature 1...*
+* [ ] *Feature 2...*
+
+---
+
 ---
 
 ## [0.0.3] - 2026-03-16
