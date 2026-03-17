@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/Author-Bilal%20Malik-9B72FF.svg?style=flat" />
   </a>
   <a href="https://github.com/byllzz/logicAnchor-vscode/releases">
-    <img src="https://img.shields.io/badge/Latest%20Release-1.0.0-9B72FF.svg?style=flat" />
+    <img src="https://img.shields.io/badge/Latest%20Release-0.0.3-9B72FF.svg?style=flat" />
   </a>
 </p>
 
@@ -26,16 +26,50 @@ Instead of cluttering your files with massive comment blocks, LogicAnchor introd
 By anchoring insights, design decisions, and logic explanations to **specific lines of code**, you ensure that the **“Why” behind your implementation is never lost over time**.
 
 ---
-## Features
+##  Features
 
-- Save thoughts or explanations directly to a specific line using the **context menu**.
-- Anchors appear in the **editor gutter**, making it easy to see where deeper insights exist in the code.
-- Hover over any anchored line to instantly view the insight rendered as **Markdown**.
-- Browse, search, and manage all saved insights from a dedicated **sidebar registry panel**.
-- Clicking an insight automatically **opens the file and jumps to the exact anchored line**.
-- **Smart Highlight:** Temporarily highlight the line with a subtle glow, guiding your eyes exactly to the relevant code.
-- The UI automatically adapts to your **VS Code theme** (Dark, Light, and High Contrast).
-- Write rich explanations using **full Markdown support**, including code blocks, lists, and formatting.
+- **Contextual Pinning**
+  Save thoughts or explanations directly to a specific line using the editor context menu *(right-click)*.
+
+- **Visual Gutter Indicators**
+  Anchors appear in the editor gutter, making it easy to spot where insights exist at a glance.
+
+- **Markdown Hover Previews**
+  Hover over any anchored line to instantly view the insight rendered as **rich Markdown**.
+
+- **Logic Registry Sidebar**
+  Browse, search, and manage all saved insights from a dedicated sidebar registry panel.
+
+- **Precision Navigation**
+  Clicking an insight in the registry automatically:
+  - Opens the file
+  - Jumps to the exact anchored line
+
+- **Smart Highlight**
+  When navigating to a note, LogicAnchor applies a temporary subtle glow to guide your focus precisely to the relevant code.
+
+- **Dynamic Ghost Text** *(New)*
+  View a faded, non-intrusive preview of your notes directly in the editor while scrolling.
+
+- **Intelligent Tracking** *(New)*
+  LogicAnchor dynamically tracks your code as you type.
+  Even when adding or deleting lines, insights remain accurately pinned to the correct logic.
+
+- **Theme Native UI**
+  The interface automatically adapts to your VS Code theme:
+  - Dark
+  - Light
+  - High Contrast
+
+- **Rich Explanations**
+  Write detailed insights using full Markdown support, including:
+  - Code blocks
+  - Lists
+  - Bold formatting
+
+---
+
+✨ *Designed to keep your logic, thoughts, and explanations seamlessly connected to your code.*
 
 ---
 

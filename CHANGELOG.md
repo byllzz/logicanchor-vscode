@@ -5,19 +5,58 @@ All notable changes to **LogicAnchor** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+
 ---
 
-## [Unreleased]
+## [0.0.3] - 2026-03-16
 
-### Planned
-- **GitHub Gist Sync**
-  - Support syncing insights across machines using GitHub Gists.
+###  Added
 
-- **Note Locking**
-  - Ability to lock insights to prevent accidental deletion.
+- **Smart Gutter Icons**
+  Introduced a custom SVG note-marker in the editor gutter for better visibility of anchored insights.
 
-- **AI-Assisted Summaries**
-  - Automatically generate explanations from code logic using AI-powered summaries.
+
+- **Toolbar Navigation**
+  Added professional action icons to the Sidebar title bar:
+  -  **Pin Insight**
+  -  **Clear All** *(with modal confirmation)*
+  -  **GitHub** — Direct link to repository
+  - **Report Issue** — Direct link to issue tracker
+
+- **Orphan Tracking**
+  New logic to detect *orphaned notes*—insights that lose their code reference due to line deletions or file wipes.
+
+---
+
+###  Changed
+
+- **Improved Performance**
+  Implemented **debounced storage updates (500ms)** to ensure smooth typing performance in large files.
+
+- **Enhanced Tooltips**
+  Gutter icons now display rich Markdown hover messages, including:
+  - Insight category
+  - Full note content
+
+- **Refined Ghost Text**
+  Optimized inline previews using `editorCodeLens.foreground` for a more native, non-distracting appearance.
+
+---
+
+###  Fixed
+
+- **Sync Issues**
+  Fixed a bug where the sidebar registry wouldn’t immediately refresh after deleting a note.
+
+- **Activation Triggers**
+  Updated `activationEvents` to ensure right-click menus and commands work even if the sidebar hasn’t been opened.
+
+- **Persistence Reliability**
+  Resolved an issue where line tracking failed during multiple rapid edits.
+
+---
+
+*This release focuses on usability, performance, and reliability—making insights smoother and more intuitive than ever.*
 
 ---
 ## [0.0.2] - 2026-03-16

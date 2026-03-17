@@ -21,8 +21,22 @@ function getSidebarContent(webview, extensionUri, notes) {
             const category = note.category || 'Logic';
             const catClass = `cat-${category.toLowerCase().replace(' ', '-')}`;
 
+            // 0.0.3 - Orphan Status Check
+            const isOrphan = note.isOrphan === true;
+            const orphanClass = isOrphan ? 'orphan' : '';
+            const orphanBadge = isOrphan ? `<span class="orphan-badge">⚠️ Orphaned</span>` : '';
+
+            // Re-anchor button (only shows if orphaned)
+            const reanchorBtn = isOrphan
+              ? `
+                <button class="icon-btn" title="Re-anchor to current cursor line" onclick="reanchorNote(event, '${file}', '${line}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                </button>
+            `
+              : '';
+
             return `
-                <div class="note-card" onclick="openFile('${file}', ${line})">
+                <div class="note-card ${orphanClass}" onclick="openFile('${file}', ${line}, ${isOrphan})">
                     <div class="note-header">
                         <div class="header-left">
                             <div class="file-info">
@@ -32,10 +46,12 @@ function getSidebarContent(webview, extensionUri, notes) {
                                 <span class="file-name">${fileName}</span>
                                 <span class="line-badge">Ln ${parseInt(line) + 1}</span>
                                 <span class="cat-badge ${catClass}">${category}</span>
+                                ${orphanBadge}
                             </div>
                             <span class="time-stamp">${new Date(note.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div class="header-right">
+                            ${reanchorBtn}
                             <button class="icon-btn delete" title="Remove Insight" onclick="deleteNote(event, '${file}', '${line}')">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                             </button>
@@ -60,7 +76,7 @@ function getSidebarContent(webview, extensionUri, notes) {
                     --glass-bg: var(--vscode-sideBar-background);
                     --card-bg: var(--vscode-editor-background);
                     --card-border: var(--vscode-widget-border, rgba(128, 128, 128, 0.2));
-                    --accent: var(--vscode-focusBorder);
+                    --accent: #9B72FF;
                     --text-main: var(--vscode-foreground);
                     --text-muted: var(--vscode-descriptionForeground);
                     --success-bg: #28a745;
@@ -139,6 +155,7 @@ function getSidebarContent(webview, extensionUri, notes) {
 
                 .toast.success { background: var(--success-bg); }
                 .toast.error { background: var(--error-bg); }
+                .toast.warning { background: #f1c40f; color: #000; }
 
                 @keyframes slideUp {
                     from { opacity: 0; transform: translateY(20px); }
@@ -269,6 +286,8 @@ function getSidebarContent(webview, extensionUri, notes) {
                 .header-right {
                     opacity: 0;
                     transition: opacity 0.2s ease;
+                    display: flex;
+                    gap: 4px;
                 }
 
                 .note-card:hover .header-right {
@@ -311,9 +330,23 @@ function getSidebarContent(webview, extensionUri, notes) {
                     color: var(--text-muted);
                     font-size: 13px;
                 }
+
+                .note-card.orphan {
+                    border-left: 4px solid #9B72FF; /* Warning light purle */
+                    opacity: 0.8;
+                }
+
+                .orphan-badge {
+                    background:red;
+                    color: #fff;
+                    font-size: 10px;
+                    padding: 4px 5px;
+                    border-radius: 12px;
+                    margin-left: 5px;
+                }
             </style>
         </head>
-        <body>
+          <body>
             <div id="toast-container"></div>
 
             <div class="header-container">
@@ -323,9 +356,11 @@ function getSidebarContent(webview, extensionUri, notes) {
                         <button class="icon-btn" id="refresh-btn" title="Sync Workspace">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                         </button>
+                        <!--
                         <button class="icon-btn" id="clear-all-btn" title="Clear All Insights">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
+                        -->
                     </div>
                 </div>
                 <div class="search-input-group">
@@ -369,7 +404,7 @@ function getSidebarContent(webview, extensionUri, notes) {
                 }
                 renderMarkdown();
 
-                // Search Logic (Updated to ensure it searches titles, text, and categories)
+                // Search Logic
                 document.getElementById('search-bar').addEventListener('input', (e) => {
                     const term = e.target.value.toLowerCase();
                     document.querySelectorAll('.note-card').forEach(card => {
@@ -381,10 +416,27 @@ function getSidebarContent(webview, extensionUri, notes) {
                 document.getElementById('refresh-btn').onclick = () => vscode.postMessage({ command: 'refresh' });
                 document.getElementById('clear-all-btn').onclick = () => vscode.postMessage({ command: 'clearAll' });
 
-                window.openFile = (file, line) => vscode.postMessage({ command: 'openFile', file, line });
+                // Navigation & Management
+                window.openFile = (file, line, isOrphan) => {
+                    if (isOrphan) {
+                        showToast("Note is orphaned. Put cursor on a new line and click the re-anchor button.", "warning");
+                    }
+                    vscode.postMessage({ command: 'openFile', file, line });
+                };
+
                 window.deleteNote = (event, file, line) => {
                     event.stopPropagation();
                     vscode.postMessage({ command: 'deleteNote', file, line });
+                };
+
+                // NEW: Re-anchor logic for v0.0.3
+                window.reanchorNote = (event, file, oldLine) => {
+                    event.stopPropagation();
+                    vscode.postMessage({
+                        command: 'reanchorNote',
+                        file: file,
+                        oldLine: oldLine
+                    });
                 };
             </script>
         </body>

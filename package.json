@@ -2,7 +2,7 @@
   "name": "logicanchor",
   "displayName": "LogicAnchor",
   "description": "Smart, persistent context layer with line-tracking, categories, and inline ghost previews for complex codebases.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "bilalmlkdev",
   "icon": "resources/logo.png",
   "repository": {
@@ -28,7 +28,7 @@
     "Productivity"
   ],
   "activationEvents": [
-    "onView:logicAnchorView"
+    "onView:logicAnchorView",
   ],
   "main": "./src/extension.js",
   "contributes": {
@@ -53,12 +53,27 @@
     "commands": [
       {
         "command": "logicanchor.addNote",
-        "title": "LogicAnchor: Pin Insight to Line"
+        "title": "LogicAnchor: Pin Insight to Line",
+        "category": "LogicAnchor",
+        "icon": "$(add)"
       },
       {
         "command": "logicanchor.clearAll",
         "title": "LogicAnchor: Clear All Workspace Insights",
-        "category": "LogicAnchor"
+        "category": "LogicAnchor",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "logicanchor.openRepo",
+        "title": "LogicAnchor: Open GitHub Repository",
+        "category": "LogicAnchor",
+        "icon": "$(github)"
+      },
+      {
+        "command": "logicanchor.reportIssue",
+        "title": "LogicAnchor: Report an Issue",
+        "category": "LogicAnchor",
+        "icon": "$(report)"
       }
     ],
     "keybindings": [
@@ -74,6 +89,28 @@
         {
           "command": "logicanchor.addNote",
           "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "logicanchor.addNote",
+          "when": "view == logicAnchorView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "logicanchor.clearAll",
+          "when": "view == logicAnchorView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "logicanchor.openRepo",
+          "when": "view == logicAnchorView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "logicanchor.reportIssue",
+          "when": "view == logicAnchorView",
+          "group": "navigation@4"
         }
       ]
     }

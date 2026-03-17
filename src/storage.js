@@ -2,9 +2,6 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 
-/**
- * This class handles saving and retrieving notes from the .context folder
- */
 class StorageManager {
   constructor(workspaceRoot) {
     this.storagePath = path.join(workspaceRoot, '.context', 'notes.json');
@@ -18,14 +15,14 @@ class StorageManager {
     }
   }
 
-  // 0.0.2 - Updated to include category support
   saveNote(fileRelativePath, line, content, category = 'Logic') {
     let data = this.getAllNotes();
     if (!data[fileRelativePath]) data[fileRelativePath] = {};
 
     data[fileRelativePath][line] = {
       content,
-      category, // Added for v0.0.2
+      category,
+      isOrphan: false, // NEW -  Default to false on save
       author: vscode.env.machineId,
       timestamp: Date.now(),
     };
@@ -33,17 +30,42 @@ class StorageManager {
     this.saveToDisk(data);
   }
 
-  // This method allows to delete a note
+  // NEW for v0.0.3 - Mark a note as an orphan
+  markAsOrphan(fileRelativePath, line, status = true) {
+    let data = this.getAllNotes();
+    if (data[fileRelativePath] && data[fileRelativePath][line]) {
+      data[fileRelativePath][line].isOrphan = status;
+      this.saveToDisk(data);
+    }
+  }
+
+  // NEW for v0.0.3 - Move note from one line to another and clear orphan status
+  reanchorNote(fileRelativePath, oldLine, newLine) {
+    let data = this.getAllNotes();
+    if (data[fileRelativePath] && data[fileRelativePath][oldLine]) {
+      const noteData = data[fileRelativePath][oldLine];
+
+      // Update the note data
+      noteData.isOrphan = false;
+      noteData.timestamp = Date.now(); // Optional - update timestamp on re-anchor
+
+      // Move to new line and delete old entry
+      data[fileRelativePath][newLine] = noteData;
+      delete data[fileRelativePath][oldLine];
+
+      this.saveToDisk(data);
+      return true;
+    }
+    return false;
+  }
+
   deleteNote(fileRelativePath, line) {
     let data = this.getAllNotes();
     if (data[fileRelativePath] && data[fileRelativePath][line]) {
       delete data[fileRelativePath][line];
-
-      // Cleanup: If a file has no more notes, remove the file key entirely
       if (Object.keys(data[fileRelativePath]).length === 0) {
         delete data[fileRelativePath];
       }
-
       this.saveToDisk(data);
       return true;
     }
@@ -63,21 +85,17 @@ class StorageManager {
 
   clearAllNotes() {
     try {
-      const emptyData = {};
-      this.saveToDisk(emptyData);
+      this.saveToDisk({});
       return true;
     } catch (error) {
-      console.error('Failed to clear notes:', error);
       return false;
     }
   }
 
-  // Helper to keep code clean
   saveToDisk(data) {
     fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
   }
 
-  // 0.0.2 - New feature for Smart Line Tracking
   updateFileNotes(filePath, fileNotes) {
     const allNotes = this.getAllNotes();
     allNotes[filePath] = fileNotes;
