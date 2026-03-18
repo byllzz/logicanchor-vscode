@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/Author-Bilal%20Malik-9B72FF.svg?style=flat" />
   </a>
   <a href="https://github.com/byllzz/logicAnchor-vscode/releases">
-    <img src="https://img.shields.io/badge/Latest%20Release-0.0.4-9B72FF.svg?style=flat" />
+    <img src="https://img.shields.io/badge/Latest%20Release-0.0.5-9B72FF.svg?style=flat" />
   </a>
 </p>
 
