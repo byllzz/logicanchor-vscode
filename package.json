@@ -2,7 +2,7 @@
   "name": "logicanchor",
   "displayName": "LogicAnchor",
   "description": "Smart, persistent context layer with line-tracking, categories, and inline ghost previews for complex codebases.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "bilalmlkdev",
   "icon": "resources/logo.png",
   "repository": {

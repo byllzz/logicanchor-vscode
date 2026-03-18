@@ -7,23 +7,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
 
+## [0.0.4] - 2026-03-18
+
+### New Features
+
+- **Live Statistics Dashboard**
+  Added a top-level stats bar that dynamically tracks the total number of insights and breaks them down by category *(Logic, Bug Fix, TODO, etc.)*.
+
+- **Regex-Safe Search Highlighting**
+  Implemented a robust search engine that highlights matching text in real time. Safely handles special characters *(e.g., brackets, dots)* without crashing the UI.
+
+- **Visual Category Themes**
+  Note cards now feature color-coded left borders based on their category, enabling instant visual identification of task types.
+
+- **Smart Registry Sync**
+  Replaced aggressive **"Registry Synced"** toast notifications with a **"Silent Init"** process. Notifications now appear only during manual refreshes—not every time the sidebar opens.
+
 ---
 
-## [0.0.4] - 2026-03-17 (In-Development)
+###  Improvements & Refinements
+
+- **Optimized Filtering**
+  Rewrote `filterNotes` logic to use `data-raw` attributes, preventing conflicts between Markdown rendering and search highlighting, and eliminating "double-encoding" bugs.
+
+- **Enhanced Delete Guard**
+  Added a native confirmation dialog to prevent accidental data loss during delete actions.
+
+- **Event Propagation Fixes**
+  Improved button click handling using `stopPropagation` to ensure actions like **Delete** and **Copy** do not trigger unintended behaviors such as **Jump to Line**.
+
+- **Theme Integration**
+  Replaced hardcoded colors with CSS variables *(e.g., `--vscode-editor-findMatchHighlightBackground`)* to ensure consistent appearance across Light, Dark, and High Contrast themes.
+
+---
+
+### Bug Fixes
+
+- Fixed a syntax error in the webview script caused by `${}` template literal conflicts within regex strings.
+
+- Resolved an issue where **"Copy Markdown"** occasionally copied the entire file object instead of the specific insight text.
+
+- Fixed a bug where **orphaned notes** *(notes whose original source code was deleted)* would lose their styling.
+
+---
+
+### Current Stats Support
+
+- **Categories Tracked:**
+  `Logic`, `Bug Fix`, `TODO`, `Warning`, `Optimization`
+
+- **Search Scope:**
+  Real-time content and category filtering
+
+
+---
+---
+
+## [0.0.4] - 2026-03-17 (Specially for bug fix)
 
 ###  Fixed (Current)
 * **Webview Scoping:** Resolved an issue where Sidebar buttons (Delete, Re-anchor) were unresponsive due to module scoping.
 * **Navigation:** Fixed a bug preventing the editor from jumping to the correct line when clicking a note card.
 * **Event Bubbling:** Fixed a conflict where clicking "Delete" would also trigger "Open File."
 
-###  Upcoming Features (To Be Added)
-* [ ] *Feature 1...*
-* [ ] *Feature 2...*
-
 ---
-
 ---
-
 ## [0.0.3] - 2026-03-16
 
 ###  Added
@@ -74,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 *This release focuses on usability, performance, and reliability—making insights smoother and more intuitive than ever.*
 
+---
 ---
 ## [0.0.2] - 2026-03-16
 

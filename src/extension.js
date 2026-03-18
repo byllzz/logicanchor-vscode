@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const StorageManager = require('./storage');
 const { getSidebarContent } = require('./webview');
+const v005 = require("../versions/v005");
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {
@@ -96,101 +97,157 @@ function activate(context) {
   };
 
   // SIDEBAR PROVIDER
-  const sidebarProvider = {
-    resolveWebviewView(webviewView) {
-      currentWebviewView = webviewView;
-      webviewView.webview.options = {
-        enableScripts: true,
-        localResourceRoots: [context.extensionUri],
-      };
+ const sidebarProvider = {
+  resolveWebviewView(webviewView) {
+    currentWebviewView = webviewView; // global reference
 
-      // Initial load
-      refreshSidebar();
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [context.extensionUri],
+    };
 
-      webviewView.webview.onDidReceiveMessage(async data => {
-        console.log('Received from Webview:', data);
-        const editor = vscode.window.activeTextEditor;
+    // Initial load
+    refreshSidebar();
 
-        switch (data.command) {
-          case 'refresh':
-            // Await the validation so the refresh picks up the new orphan status
-            await validateAnchorsOnStart(storage, root);
+    webviewView.webview.onDidReceiveMessage(async data => {
+      console.log('Received from Webview:', data);
+      const editor = vscode.window.activeTextEditor;
+
+      switch (data.command) {
+        // v0.0.5 feature: Inline Edit
+        case 'editNote':
+          const editSuccessful = await v005.editInsight(storage, data.file, data.line);
+
+          if (editSuccessful) {
             refreshSidebar();
-            webviewView.webview.postMessage({
-              command: 'showToast',
-              text: 'Registry synced.',
-              type: 'success',
-            });
-            break;
-
-          case 'deleteNote':
-            storage.deleteNote(data.file, data.line);
-            refreshSidebar(); // Use the global helper
+            //  Refresh the decorations in the code editor
+            const editor = vscode.window.activeTextEditor;
             if (editor) {
               updateDecorations(editor);
             }
+            //  Send the toast
             webviewView.webview.postMessage({
               command: 'showToast',
-              text: 'Insight removed.',
-              type: 'error',
+              text: 'Insight updated live.',
+              type: 'success',
             });
-            break;
+          }
+          break;
 
-          case 'openFile':
-            const uri = vscode.Uri.file(path.join(root, data.file));
-            const doc = await vscode.workspace.openTextDocument(uri);
-            const openedEditor = await vscode.window.showTextDocument(doc);
+        // v0.0.5 feature (export to json)
+        case 'exportJson':
+          await v005.exportToJSON(storage);
+          break;
+        // v0.0.5 feature(copyMarkdown)
+        case 'copyMarkdown':
+          await v005.copyAsMarkdown(storage, data.file, data.line);
+          webviewView.webview.postMessage({
+            command: 'showToast',
+            text: 'Markdown copied to clipboard!',
+            type: 'success',
+          });
+          break;
 
-            const pos = new vscode.Position(parseInt(data.line), 0);
-            const range = new vscode.Range(pos, pos);
+// v0.0.5 silent background process
+      case 'init':
+    const initStats = v005.getStats(storage);
+    webviewView.webview.postMessage({
+        command: 'updateStats',
+        stats: initStats,
+    });
+    break;
 
-            openedEditor.selection = new vscode.Selection(pos, pos);
-            openedEditor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+case 'refresh':
+    await validateAnchorsOnStart(storage, root);
+    refreshSidebar();
+    const refreshStats = v005.getStats(storage);
+    webviewView.webview.postMessage({
+        command: 'updateStats',
+        stats: refreshStats,
+    });
+    webviewView.webview.postMessage({
+        command: 'showToast',
+        text: 'Registry synced.',
+        type: 'success',
+    });
+    break;
+    // v0.0.5 feature (provides total stats of insights )
+case 'getStats':
+    const stats = v005.getStats(storage);
+    webviewView.webview.postMessage({
+        command: 'updateStats',
+        stats: stats,
+    });
+    break;
 
-            openedEditor.setDecorations(noteHighlightDecoration, [range]);
-            setTimeout(() => {
-              openedEditor.setDecorations(noteHighlightDecoration, []);
-            }, 2000);
-            break;
+        case 'deleteNote':
+          storage.deleteNote(data.file, data.line);
+          refreshSidebar();
+          if (editor) {
+            updateDecorations(editor);
+          }
+          webviewView.webview.postMessage({
+            command: 'showToast',
+            text: 'Insight removed.',
+            type: 'error',
+          });
+          break;
 
-          case 'reanchorNote':
-            if (!editor) {
-              vscode.window.showErrorMessage(
-                'Open the file and place your cursor on the new line first!',
-              );
-              return;
-            }
+        case 'openFile':
+          const uri = vscode.Uri.file(path.join(root, data.file));
+          const doc = await vscode.workspace.openTextDocument(uri);
+          const openedEditor = await vscode.window.showTextDocument(doc);
 
-            const activeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+          const pos = new vscode.Position(parseInt(data.line), 0);
+          const range = new vscode.Range(pos, pos);
 
-            if (activeFilePath !== data.file) {
-              vscode.window.showErrorMessage(`Please open ${data.file} to re-anchor this note.`);
-              return;
-            }
+          openedEditor.selection = new vscode.Selection(pos, pos);
+          openedEditor.revealRange(range, vscode.TextEditorRevealType.InCenter);
 
-            const newLine = editor.selection.active.line;
-            const success = storage.reanchorNote(data.file, data.oldLine, newLine);
+          openedEditor.setDecorations(noteHighlightDecoration, [range]);
+          setTimeout(() => {
+            openedEditor.setDecorations(noteHighlightDecoration, []);
+          }, 2000);
+          break;
 
-            if (success) {
-              refreshSidebar(); // Keep UI in sync
-              updateDecorations(editor);
-              webviewView.webview.postMessage({
-                command: 'showToast',
-                text: `Re-anchored to line ${newLine + 1}`,
-                type: 'success',
-              });
-            } else {
-              vscode.window.showErrorMessage('Could not find the original note data to move.');
-            }
-            break;
+        case 'reanchorNote':
+          if (!editor) {
+            vscode.window.showErrorMessage(
+              'Open the file and place your cursor on the new line first!',
+            );
+            return;
+          }
 
-          case 'clearAll':
-            vscode.commands.executeCommand('logicanchor.clearAll');
-            break;
-        }
-      });
-    },
-  };
+          const activeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+
+          if (activeFilePath !== data.file) {
+            vscode.window.showErrorMessage(`Please open ${data.file} to re-anchor this note.`);
+            return;
+          }
+
+          const newLine = editor.selection.active.line;
+          const success = storage.reanchorNote(data.file, data.oldLine, newLine);
+
+          if (success) {
+            refreshSidebar();
+            updateDecorations(editor);
+            webviewView.webview.postMessage({
+              command: 'showToast',
+              text: `Re-anchored to line ${newLine + 1}`,
+              type: 'success',
+            });
+          } else {
+            vscode.window.showErrorMessage('Could not find the original note data to move.');
+          }
+          break;
+
+        case 'clearAll':
+          vscode.commands.executeCommand('logicanchor.clearAll');
+          break;
+      }
+    });
+  },
+};
 
   //  EVENT LISTENERS
   // ADD Note COMMANDS (Updated with Categories)
@@ -398,6 +455,15 @@ function activate(context) {
       }
     }),
   );
+
+
+  // v0.0.5 features
+
+  // Registering the Export Command
+  let exportCmd = vscode.commands.registerCommand("logicanchor.export" , ()=> {
+    v005.exportToJSON(storage);
+  });
+
 }
 
 function debounce(func, wait) {

@@ -19,7 +19,7 @@ function getSidebarContent(webview, extensionUri, notes) {
 
             // 0.0.2 - Support for Categories
             const category = note.category || 'Logic';
-            const catClass = `cat-${category.toLowerCase().replace(' ', '-')}`;
+            // const catClass = `cat-${category.toLowerCase().replace(' ', '-')}`;
 
             // 0.0.3 - Orphan Status Check
             const isOrphan = note.isOrphan === true;
@@ -35,8 +35,13 @@ function getSidebarContent(webview, extensionUri, notes) {
             `
               : '';
 
+
+              // v0.0.5 feature(to hightlight card with exact cat color)
+              const catClass = (note.category || 'Logic').toLowerCase().replace(/\s+/g, '-');
             return `
-                <div class="note-card ${orphanClass}" onclick="openFile('${file}', ${line}, ${isOrphan})">
+               <div class="note-card ${orphanClass} ${catClass}"
+      onclick="openFile('${file}', ${line}, ${isOrphan})"
+      data-category="${note.category || 'Logic'}">
                     <div class="note-header">
                         <div class="header-left">
                             <div class="file-info">
@@ -45,19 +50,43 @@ function getSidebarContent(webview, extensionUri, notes) {
                                 </div>
                                 <span class="file-name">${fileName}</span>
                                 <span class="line-badge">Ln ${parseInt(line) + 1}</span>
-                                <span class="cat-badge ${catClass}">${category}</span>
+                                <!--<span class="cat-badge ${catClass}">${category}</span> -->
+                             <span class="cat-badge cat-${category.toLowerCase().replace(/\s+/g, '-')}" data-category="${category}">
+    ${category}
+</span>
                                 ${orphanBadge}
                             </div>
                             <span class="time-stamp">${new Date(note.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <div class="header-right">
-                            ${reanchorBtn}
-                            <button class="icon-btn delete" title="Remove Insight" onclick="deleteNote(event, '${file}', '${line}')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                            </button>
-                        </div>
+                       <div class="header-right">
+    ${reanchorBtn}
+
+    <button class="icon-btn edit" title="Edit Insight" onclick="editNote(event, '${file}', '${line}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+    </button>
+
+    <button class="icon-btn delete" title="Remove Insight" onclick="deleteNote(event, \`${file}\`, \`${line}\`)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+    </button>
+
+
+<button class="icon-btn copy" title="Copy Markdown" onclick="copyMarkdown(event, '${file}', '${line}')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+</button>
+</div>
                     </div>
-                    <div class="note-content markdown-body" data-raw="${safeContent}"></div>
+                   <div class="note-content markdown-body" data-raw="${safeContent}">
+                    </div>
+
+
                 </div>
             `;
         }).join('');
@@ -262,21 +291,52 @@ function getSidebarContent(webview, extensionUri, notes) {
                     border-radius: 10px;
                 }
 
-                /* 0.0.2 - Category Badge Styles */
+                /* 0.0.2 - (Category Badge Styles updates for v0.0.5) */
                 .cat-badge {
-                    font-size: 9px;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    padding: 2px 5px;
-                    border-radius: 3px;
-                    border: 1px solid currentColor;
-                    opacity: 0.85;
-                }
-                .cat-logic { color: var(--vscode-descriptionForeground); }
-                .cat-bug-fix { color: var(--vscode-testing-iconFailed, #f14c4c); }
-                .cat-warning { color: var(--vscode-problemsWarningIcon-foreground, #cca700); }
-                .cat-todo { color: var(--vscode-textLink-foreground, #3794ff); }
-                .cat-optimization { color: var(--vscode-testing-iconPassed, #73c991); }
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 1px 5px; /* Slightly tighter padding for a pro look */
+    border-radius: 3px;
+    border: 1px solid currentColor;
+    display: inline-block;
+    line-height: 1.2;
+    transition: opacity 0.2s;
+}
+
+.cat-badge:hover {
+    opacity: 1; /* Pops slightly when hovering over the card */
+}
+
+/* Logic - Neutral Gray */
+.cat-logic {
+    color: var(--vscode-descriptionForeground);
+    background: rgba(128, 128, 128, 0.1);
+}
+
+/* Bug Fix - Red */
+.cat-bug-fix {
+    color: var(--vscode-testing-iconFailed, #f14c4c);
+    background: rgba(241, 76, 76, 0.1);
+}
+
+/* Warning - Amber/Yellow */
+.cat-warning {
+    color: var(--vscode-problemsWarningIcon-foreground, #cca700);
+    background: rgba(204, 167, 0, 0.1);
+}
+
+/* TODO - Blue */
+.cat-todo {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    background: rgba(55, 148, 255, 0.1);
+}
+
+/* Optimization - Green */
+.cat-optimization {
+    color: var(--vscode-testing-iconPassed, #73c991);
+    background: rgba(115, 201, 145, 0.1);
+}
 
                 .time-stamp {
                     font-size: 11px;
@@ -317,6 +377,10 @@ function getSidebarContent(webview, extensionUri, notes) {
                     background: color-mix(in srgb, var(--vscode-errorForeground) 15%, transparent);
                 }
 
+                .icon-btn.edit:hover {
+    color: var(--vscode-textLink-foreground);
+    background: color-mix(in srgb, var(--vscode-textLink-foreground) 15%, transparent);
+}
                 .note-content {
                     font-size: 13px;
                     line-height: 1.5;
@@ -344,10 +408,126 @@ function getSidebarContent(webview, extensionUri, notes) {
                     border-radius: 12px;
                     margin-left: 5px;
                 }
+
+                .export-btn {
+    width: 100%;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    border-radius: 2px;
+}
+
+.export-btn:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+
+.filter-container {
+    padding: 10px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    margin-bottom: 10px;
+}
+
+#categoryFilter {
+    width: 100%;
+    background: var(--vscode-dropdown-background);
+    color: var(--vscode-dropdown-foreground);
+    border: 1px solid var(--vscode-dropdown-border);
+    padding: 4px;
+    outline: none;
+}
+
+#categoryFilter:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+#empty-state-text{
+color: var(--vscode-dropdown-foreground);
+}
+
+
+.stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: var(--vscode-sideBar-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    overflow-x: auto;
+}
+
+.stat-item.total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid var(--vscode-panel-border);
+    padding-right: 12px;
+}
+
+.stat-count {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--vscode-button-background);
+}
+
+.stat-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.category-pills {
+    display: flex;
+    gap: 6px;
+}
+
+.stat-pill {
+    white-space: nowrap;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    cursor: pointer;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border: 1px solid transparent;
+}
+
+.stat-pill:hover {
+    border-color: var(--vscode-focusBorder);
+}
+
+/* Match your existing category colors */
+.stat-pill.bug-fix { color: var(--vscode-testing-iconFailed); }
+.stat-pill.todo { color: var(--vscode-textLink-foreground); }
+mark {
+    background: var(--vscode-editor-findMatchHighlightBackground, #e5a50a);
+    color: var(--vscode-editor-findMatchHighlightForeground, black);
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+.note-card.logic { border-left: 4px solid var(--vscode-debugIcon-breakpointForeground); }
+.note-card.bug-fix { border-left: 4px solid var(--vscode-errorForeground); }
+.note-card.warning { border-left: 4px solid var(--vscode-editorWarning-foreground); }
+.note-card.todo { border-left: 4px solid var(--vscode-textLink-foreground); }
+.note-card.optimization { border-left: 4px solid var(--vscode-debugIcon-startForeground); }
+
+.stat-pill.logic { background: rgba(231, 76, 60, 0.1); color: var(--vscode-debugIcon-breakpointForeground); }
+.stat-pill.bug-fix { background: rgba(241, 144, 144, 0.1); color: var(--vscode-errorForeground); }
+
             </style>
         </head>
           <body>
             <div id="toast-container"></div>
+
+
 
             <div class="header-container">
                 <div class="action-bar">
@@ -361,6 +541,10 @@ function getSidebarContent(webview, extensionUri, notes) {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                         -->
+                        <button class="export-btn" onclick="exportData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Export JSON
+    </button>
                     </div>
                 </div>
                 <div class="search-input-group">
@@ -369,35 +553,96 @@ function getSidebarContent(webview, extensionUri, notes) {
                 </div>
             </div>
 
+
+
+            <!-- v0.0.5 categories filter -->
+            <div class="filter-container">
+    <select id="categoryFilter" onchange="filterNotes()">
+        <option value="all">All Categories</option>
+        <option value="Logic">Logic</option>
+        <option value="Bug Fix">Bug Fix</option>
+        <option value="Warning">Warning</option>
+        <option value="TODO">TODO</option>
+        <option value="Optimization">Optimization</option>
+    </select>
+</div>
+
+<div class="stats-bar" id="stats-container">
+    <div class="stat-item total">
+        <span class="stat-count" id="stat-total">0</span>
+        <span class="stat-label">Total Insights</span>
+    </div>
+    <div id="category-stats-pills" class="category-pills"></div>
+</div>
+
+
             <div id="notes-container">
-                ${notesListHtml || '<div class="empty-state">No context insights found.<br>Right-click a line to pin a thought.</div>'}
+                ${notesListHtml}
             </div>
-         <script type="module">
+            <div id="empty-state" style="display: none; padding: 20px; text-align: center; font-style:italic; opacity: 0.7;"><p id="empty-state-text">No insights found in this category.</p></div>
+</div>
+
+<script type="module">
     import { marked } from '${markedJsUri}';
     const vscode = acquireVsCodeApi();
 
-    //  Attaching functions to window immediately so HTML can see them
+    // --- UI HELPERS ---
+
     window.showToast = (message, type = 'success') => {
         const container = document.getElementById('toast-container');
+        if (!container) return;
+
         const toast = document.createElement('div');
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
+
         toast.className = 'toast ' + type;
-        toast.innerHTML = '<span>' + message + '</span>';
+        toast.innerHTML =
+            '<span class="toast-icon">' + (icons[type] || '') + '</span>' +
+            '<span class="toast-message">' + message + '</span>';
+
         container.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 300);
-        }, 2800);
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        const timer = setTimeout(() => removeToast(toast), 3000);
+
+        toast.onclick = () => {
+            clearTimeout(timer);
+            removeToast(toast);
+        };
+
+    function removeToast(el) {
+    el.classList.add('fade-out');
+    const forceRemove = setTimeout(() => {
+        if (el.parentNode) el.remove();
+    }, 500);
+
+    el.addEventListener('transitionend', () => {
+        clearTimeout(forceRemove); // Clear the fallback if CSS worked
+        el.remove();
+    }, { once: true });
+}
+    };
+
+    // Core Actions.
+    window.editNote = (event, file, line) => {
+        event.preventDefault();
+        event.stopPropagation();
+        vscode.postMessage({ command: 'editNote', file: file, line: line });
     };
 
     window.openFile = (file, line, isOrphan) => {
         if (isOrphan) {
             window.showToast("Note is orphaned. Use the re-anchor button to fix it.", "warning");
-            // still send the message so the user can see the file
         }
         vscode.postMessage({ command: 'openFile', file: file, line: line });
     };
 
-    window.deleteNote = (event, file, line) => {
+  window.deleteNote = (event, file, line) => {
         event.preventDefault();
         event.stopPropagation(); // Prevents openFile from firing
         vscode.postMessage({ command: 'deleteNote', file: file, line: line });
@@ -406,45 +651,156 @@ function getSidebarContent(webview, extensionUri, notes) {
     window.reanchorNote = (event, file, oldLine) => {
         event.preventDefault();
         event.stopPropagation();
-        vscode.postMessage({
-            command: 'reanchorNote',
-            file: file,
-            oldLine: oldLine
-        });
+        vscode.postMessage({ command: 'reanchorNote', file: file, oldLine: oldLine });
     };
 
-    // 2. Handle incoming messages
-    window.addEventListener('message', event => {
-        const message = event.data;
-        if (message.command === 'showToast') {
-            window.showToast(message.text, message.type);
+    window.exportData = () => {
+        vscode.postMessage({ command: "exportJson" });
+    };
+
+    window.copyMarkdown = (event, file, line) => {
+        event.preventDefault();
+        event.stopPropagation();
+        vscode.postMessage({ command: 'copyMarkdown', file: file, line: line });
+    };
+
+    // Filter & Search Logic
+window.filterNotes = () => {
+    const filterSelect = document.getElementById('categoryFilter');
+    const searchInput = document.getElementById('search-bar');
+    const emptyState = document.getElementById('empty-state');
+    const emptyText = document.getElementById('empty-state-text');
+
+    if (!filterSelect || !emptyState || !emptyText) return;
+
+    const filterValue = filterSelect.value;
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const cards = document.querySelectorAll('.note-card');
+
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const cardCategory = card.getAttribute('data-category') || '';
+        const contentEl = card.querySelector('.note-content');
+
+        const rawData = contentEl.getAttribute('data-raw');
+        if (!rawData) return;
+
+        const decodedContent = decodeURIComponent(rawData);
+        const searchTarget = decodedContent.toLowerCase();
+
+        const matchesFilter = (filterValue === 'all' || cardCategory.trim() === filterValue.trim());
+        const matchesSearch = searchTarget.includes(searchTerm);
+
+        if (matchesFilter && matchesSearch) {
+            card.style.display = 'block';
+            visibleCount++;
+
+            let htmlResult = marked.parse(decodedContent);
+
+           if (searchTerm !== '') {
+
+                const escapedTerm = searchTerm.replace(/[.*+?^$|()\[\]\\]/g, '\\$&');
+                const regex = new RegExp('(' + escapedTerm + ')', 'gi');
+                htmlResult = htmlResult.replace(regex, '<mark>$1</mark>');
+            }
+
+            contentEl.innerHTML = htmlResult;
+        } else {
+            card.style.display = 'none';
         }
     });
 
-    // 3. Initial Rendering
+    // Empty State
+    emptyState.style.display = (visibleCount === 0) ? 'block' : 'none';
+    if (visibleCount === 0) {
+        if (searchTerm) {
+            emptyText.innerText = 'No results matching "' + searchTerm + '"';
+        } else if (filterValue !== 'all') {
+            emptyText.innerText = 'No insights found for "' + filterValue + '".';
+        } else {
+            emptyText.innerText = "You haven't added any insights yet!";
+        }
+    }
+};
+
+    // Initialization..
+  window.addEventListener('message', event => {
+    const message = event.data;
+
+    switch (message.command) {
+        case 'showToast':
+            window.showToast(message.text, message.type);
+            break;
+
+        case 'onRefresh':
+            renderMarkdown();
+            window.filterNotes();
+            break;
+
+        case 'updateStats':
+            updateStatsUI(message.stats);
+            break;
+    }
+});
+
+function updateStatsUI(stats) {
+    const totalEl = document.getElementById('stat-total');
+    const pillContainer = document.getElementById('category-stats-pills');
+
+    if (!totalEl || !pillContainer) return;
+    totalEl.innerText = stats.total || 0;
+    pillContainer.innerHTML = '';
+
+    if (stats.categories) {
+        Object.entries(stats.categories).forEach(([name, count]) => {
+            if (count > 0) {
+                const pill = document.createElement('div');
+                const safeName = name.toLowerCase().replace(/\s+/g, '-');
+
+                pill.className = 'stat-pill ' + safeName;
+                pill.innerHTML = '<strong>' + count + '</strong> ' + name;
+                pill.onclick = () => {
+                    const filterDropdown = document.getElementById('categoryFilter');
+                    if (filterDropdown) {
+                        filterDropdown.value = name;
+                        window.filterNotes();
+                    }
+                };
+
+                pillContainer.appendChild(pill);
+            }
+        });
+    }
+}
+
     function renderMarkdown() {
         document.querySelectorAll('.note-content').forEach(el => {
             const rawData = el.getAttribute('data-raw');
-            if (rawData) el.innerHTML = marked.parse(decodeURIComponent(rawData));
+            if (rawData) {
+                el.innerHTML = marked.parse(decodeURIComponent(rawData));
+            }
         });
     }
+
+    // Run once on load
     renderMarkdown();
+    window.filterNotes();
 
-    // 4. Search Logic
-    document.getElementById('search-bar').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        document.querySelectorAll('.note-card').forEach(card => {
-            card.style.display = card.innerText.toLowerCase().includes(term) ? 'block' : 'none';
-        });
-    });
+    // Attach listeners
+    const sBar = document.getElementById('search-bar');
+    if (sBar) sBar.addEventListener('input', window.filterNotes);
 
-    // 5. Action Buttons (Check if they exist before adding listeners)
+    const cFilter = document.getElementById('categoryFilter');
+    if (cFilter) cFilter.addEventListener('change', window.filterNotes);
+
     const refreshBtn = document.getElementById('refresh-btn');
-    if(refreshBtn) refreshBtn.onclick = () => vscode.postMessage({ command: 'refresh' });
+    if (refreshBtn) refreshBtn.onclick = () => vscode.postMessage({ command: 'refresh' });
 
     const clearBtn = document.getElementById('clear-all-btn');
-    if(clearBtn) clearBtn.onclick = () => vscode.postMessage({ command: 'clearAll' });
+    if (clearBtn) clearBtn.onclick = () => vscode.postMessage({ command: 'clearAll' });
 
+    vscode.postMessage({ command: 'init' });
 </script>
         </body>
         </html>
