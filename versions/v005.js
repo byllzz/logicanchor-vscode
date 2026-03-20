@@ -56,11 +56,10 @@ class Version005 {
       vscode.window.showErrorMessage('Failed to update: ' + error.message);
       return false;
     }
-  }
-
-  /**
-   * FEATURE: Copy as Markdown
+  } /**
+   * Copy as Markdown
    */
+
   static async copyAsMarkdown(storage, file, line) {
     const allNotes = storage.getAllNotes();
 
@@ -69,47 +68,40 @@ class Version005 {
     const note = fileNotes[line];
 
     if (note && note.content) {
-        const justTheInsight = note.content;
-        await vscode.env.clipboard.writeText(justTheInsight);
-        return true;
+      const justTheInsight = note.content;
+      await vscode.env.clipboard.writeText(justTheInsight);
+      return true;
     }
 
     return false;
-}
-
-  /**
- * FEATURE: Statistics Dashboard
- */
-static getStats(storage) {
+  } /**
+   * Statistics Dashboard
+   */
+  static getStats(storage) {
     const allNotes = storage.getAllNotes();
     const stats = {
-        total: 0,
-        categories: {
-            'Logic': 0,
-            'Bug Fix': 0,
-            'Warning': 0,
-            'TODO': 0,
-            'Optimization': 0
-        }
+      total: 0,
+      orphans: 0,
+      categories: { Logic: 0, 'Bug Fix': 0, Warning: 0, TODO: 0, Optimization: 0 },
     };
 
-    // Use Object.values for cleaner iteration
     Object.values(allNotes).forEach(fileNotes => {
-        Object.values(fileNotes).forEach(note => {
-            if (!note) return; // Safety check
+      Object.values(fileNotes).forEach(note => {
+        if (!note) return;
 
-            stats.total++;
-            const cat = note.category || 'Logic';
-            if (!stats.categories.hasOwnProperty(cat)) {
-                stats.categories[cat] = 0;
-            }
-
+        if (note.isOrphan) {
+          stats.orphans++; // Correctly count orphans
+        } else {
+          stats.total++; // Correctly count active notes
+          const cat = note.category || 'Logic';
+          if (stats.categories.hasOwnProperty(cat)) {
             stats.categories[cat]++;
-        });
+          }
+        }
+      });
     });
-
     return stats;
-}
+  }
   /**
    * Export Logic
    */

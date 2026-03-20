@@ -1,8 +1,8 @@
 {
   "name": "logicanchor",
   "displayName": "LogicAnchor",
-  "description": "Smart, persistent context layer with line-tracking, categories, and inline ghost previews for complex codebases.",
-  "version": "0.0.5",
+  "description": "Smart, line-stable context layers with categorized insights and inline ghost previews.",
+  "version": "0.0.6",
   "publisher": "bilalmlkdev",
   "icon": "resources/logo.png",
   "repository": {
@@ -25,7 +25,7 @@
   "categories": [
     "Other",
     "Visualization"
-  ] ,
+  ],
   "activationEvents": [
     "onView:logicAnchorView"
   ],
@@ -35,7 +35,7 @@
       "activitybar": [
         {
           "id": "logicanchor-sidebar",
-          "title": "LogicAnchor",
+          "title": "LogicAnchor(Ctrl+Alt+A)",
           "icon": "resources/logicanchor.svg"
         }
       ]
@@ -73,6 +73,32 @@
         "title": "LogicAnchor: Report an Issue",
         "category": "LogicAnchor",
         "icon": "$(report)"
+      },
+      {
+        "command": "logicanchor.nextInsight",
+        "title": "LogicAnchor: Next Insight"
+      },
+      {
+        "command": "logicanchor.prevInsight",
+        "title": "LogicAnchor: Previous Insight"
+      },
+      {
+        "command": "logicanchor.generateMap",
+        "title": "LogicAnchor: Generate Project Logic Map (MD)",
+        "category": "LogicAnchor",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "logicanchor.projectHealth",
+        "title": "LogicAnchor: Check Project Documentation Health",
+        "category": "LogicAnchor",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "logicanchor.cleanupOrphans",
+        "title": "LogicAnchor: Clean Up Orphaned Notes",
+        "category": "LogicAnchor",
+        "icon": "$(clear-all)"
       }
     ],
     "keybindings": [
@@ -80,6 +106,16 @@
         "command": "logicanchor.addNote",
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "logicanchor.nextInsight",
+        "key": "alt+down",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "logicanchor.prevInsight",
+        "key": "alt+up",
         "when": "editorTextFocus"
       }
     ],
@@ -97,9 +133,24 @@
           "group": "navigation@1"
         },
         {
-          "command": "logicanchor.clearAll",
+          "command": "logicanchor.generateMap",
+          "when": "view == logicAnchorView",
+          "group": "navigation@1.1"
+        },
+        {
+          "command": "logicanchor.projectHealth",
+          "when": "view == logicAnchorView",
+          "group": "navigation@1.2"
+        },
+        {
+          "command": "logicanchor.cleanupOrphans",
           "when": "view == logicAnchorView",
           "group": "navigation@2"
+        },
+        {
+          "command": "logicanchor.clearAll",
+          "when": "view == logicAnchorView",
+          "group": "navigation@2.1"
         },
         {
           "command": "logicanchor.openRepo",

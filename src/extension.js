@@ -4,128 +4,184 @@ const fs = require('fs');
 const StorageManager = require('./storage');
 const { getSidebarContent } = require('./webview');
 const v005 = require("../versions/v005");
+const v006 = require("../versions/v006");
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {
-  const root = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-  if (!root) return;
+const root = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+if (!root) return;
 
-  const storage = new StorageManager(root);
-  let currentWebviewView = null;
+const storage = new StorageManager(root);
+let currentWebviewView = null;
+let pendingNotesCache = {};
 
-  // function to refresh the Sidebar content
-  const refreshSidebar = () => {
-    if (currentWebviewView) {
-      currentWebviewView.webview.html = getSidebarContent(
-        currentWebviewView.webview,
-        context.extensionUri,
-        storage.getAllNotes(),
-      );
-    }
-  };
-
-  // the debounced update outside the listener so it persists
-  const debouncedStorageUpdate = debounce((filePath, notes) => {
-    storage.updateFileNotes(filePath, notes);
-    refreshSidebar(); // Refresh UI after the file is actually updated
-  }, 500);
-
-  //  Validate anchors on activation to mark orphans v0.0.3
-  // validateAnchorsOnStart(storage, root); ... also called it bottom
-  //  HIGHLIGHT DECORATION (From v0.0.1 update)
-  const noteHighlightDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: new vscode.ThemeColor('editor.symbolHighlightBackground'),
-    isWholeLine: true,
-    border: '1px solid gold',
-    overviewRulerColor: 'gold',
-    overviewRulerLane: vscode.OverviewRulerLane.Full,
-  });
-
-  //  GUTTER DECORATION SETUP
-  const noteDecorationType = vscode.window.createTextEditorDecorationType({
-    gutterIconPath: context.asAbsolutePath(path.join('resources', 'note-marker.svg')),
-    gutterIconSize: 'contain',
-    isWholeLine: true,
-    backgroundColor: 'rgba(0, 122, 204, 0.03)',
-  });
-
-  //  GHOST TEXT DECORATION (New in v0.0.2)
-  const ghostTextDecoration = vscode.window.createTextEditorDecorationType({});
-
-  const updateDecorations = editor => {
-    if (!editor) return;
-    const filePath = vscode.workspace.asRelativePath(editor.document.uri, false);
-    const fileNotes = storage.getAllNotes()[filePath] || {};
-
-    const gutterDecorations = [];
-    const ghostDecorations = [];
-
-    Object.keys(fileNotes).forEach(lineStr => {
-      const line = parseInt(lineStr);
-      const note = fileNotes[lineStr];
-
-      // Skip decorations if the note is orphaned (v0.0.3 update)
-      if (note.isOrphan) return;
-
-      const range = new vscode.Range(line, 0, line, 0);
-      const category = note.category || 'Logic'; // Fallback for older notes
-
-      // Gutter & Hover Tooltip
-      gutterDecorations.push({
-        range,
-        hoverMessage: new vscode.MarkdownString(
-          `**[${category.toUpperCase()}] LogicAnchor:**\n\n${note.content}`,
-        ),
-      });
-
-      // Ghost Text (Inline Preview)
-      ghostDecorations.push({
-        range,
-        renderOptions: {
-          after: {
-            contentText: `${category}: ${note.content.substring(0, 40)}${note.content.length > 40 ? '...' : ''}`,
-            fontStyle: 'italic',
-            color: new vscode.ThemeColor('editorCodeLens.foreground'), // Faded color for ghost text
-            margin: '0 0 0 3em',
-          },
-        },
-      });
-    });
-
-    editor.setDecorations(noteDecorationType, gutterDecorations);
-    editor.setDecorations(ghostTextDecoration, ghostDecorations);
-  };
-
-  // SIDEBAR PROVIDER
- const sidebarProvider = {
-  resolveWebviewView(webviewView) {
-    currentWebviewView = webviewView; // global reference
-
-    webviewView.webview.options = {
-      enableScripts: true,
-      localResourceRoots: [context.extensionUri],
+// function to refresh the Sidebar content
+ const refreshSidebar = () => {
+  if(!currentWebviewView) return;
+   //  Getthing stats from v0.0.5
+   const stats = v005.getStats(storage);
+   const totalCount = Number(stats.total) || 0;
+   const orphanCount = Number(stats.orphans) || 0;
+  //  Clear if 0, otherwise show health vs warning
+  if (totalCount === 0 && orphanCount === 0) {
+    currentWebviewView.badge = {value : 0 , tooltip : ""};
+  } else {
+    currentWebviewView.badge = {
+      value: totalCount > 0 ? totalCount : orphanCount,
+      tooltip: orphanCount > 0
+        ? `⚠️ ${orphanCount} Orphans Detected`
+        : `${totalCount} Logic Anchors pinned`
     };
+  }
+ const allNotes = storage.getAllNotes();
+  currentWebviewView.webview.html = getSidebarContent(
+    currentWebviewView.webview,
+    context.extensionUri,
+    allNotes
+  );
+ // Updating Stats in Webview UI
+  currentWebviewView.webview.postMessage({
+  command: 'updateStats',
+  stats: stats,
+  });
 
+  if (v006?.updateStatusBarPulse) {
+    v006.updateStatusBarPulse(storage);
+  }
+ };
+
+//  Debounce function..
+const debouncedStorageUpdate = debounce((filePath, notes) => {
+  storage.updateFileNotes(filePath, notes);
+  delete pendingNotesCache[filePath];
+  // Refreshing sidebar here and checks for orphan alerts ONLY after typing stops
+  refreshSidebar();
+  if (v006?.updateOrphanAlert) {
+    v006.updateOrphanAlert(storage);
+  }
+}, 500);
+
+  //  Validate anchors on activation to mark orphans v0.0.3
+  // validateAnchorsOnStart(storage, root); ... also called it bottom
+  const noteHighlightDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: new vscode.ThemeColor('editor.symbolHighlightBackground'),
+    isWholeLine: true,
+    border: '1px solid gold',
+    overviewRulerColor: 'gold',
+    overviewRulerLane: vscode.OverviewRulerLane.Full,
+  });
+
+  //  GUTTER DECORATION SETUP
+  const noteDecorationType = vscode.window.createTextEditorDecorationType({
+    gutterIconPath: context.asAbsolutePath(path.join('resources', 'note-marker.svg')),
+    gutterIconSize: 'contain',
+    isWholeLine: true,
+    backgroundColor: 'rgba(0, 122, 204, 0.03)',
+  });
+
+  //  GHOST TEXT DECORATION (New in v0.0.2)
+  const ghostTextDecoration = vscode.window.createTextEditorDecorationType({});
+
+ const updateDecorations = (editor, liveNotes = null) => {
+    if (!editor) return;
+    const filePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+
+    // Prioritize: 1. Passed live notes, 2. The temporary cache, 3. The disk storage
+    const fileNotes = liveNotes || (typeof pendingNotesCache !== 'undefined' ? pendingNotesCache[filePath] : null) || storage.getAllNotes()[filePath] || {};
+
+    const gutterDecorations = [];
+    const ghostDecorations = [];
+
+    Object.keys(fileNotes).forEach(lineStr => {
+      const line = parseInt(lineStr);
+      const note = fileNotes[lineStr];
+
+      // Skip decorations if the note is orphaned
+      if (note.isOrphan) return;
+
+      // We anchor the range to the start of the line
+      const range = new vscode.Range(line, 0, line, 0);
+      const category = note.category || 'Logic';
+
+      // Gutter & Hover Tooltip
+      gutterDecorations.push({
+        range,
+        hoverMessage: new vscode.MarkdownString(
+          `**[${category.toUpperCase()}] LogicAnchor:**\n\n${note.content}`,
+        ),
+      });
+
+      // Ghost Text (Inline Preview)
+      ghostDecorations.push({
+        range,
+        // This ensures the decoration stays attached to the text range
+        // even if lines are added/removed around it.
+        rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+        renderOptions: {
+          after: {
+            contentText: ` ${category}: ${note.content.substring(0, 40)}${note.content.length > 40 ? '...' : ''}`,
+            fontStyle: 'italic',
+            color: new vscode.ThemeColor('editorCodeLens.foreground'),
+            margin: '0 0 0 3em',
+          },
+        },
+      });
+    });
+
+    editor.setDecorations(noteDecorationType, gutterDecorations);
+    editor.setDecorations(ghostTextDecoration, ghostDecorations);
+  };
+
+  // SIDEBAR PROVIDER
+ const sidebarProvider = {
+  resolveWebviewView(webviewView) {
+    currentWebviewView = webviewView; // global reference
+  webviewView.onDidDispose(() => {
+    currentWebviewView = null;
+  });
+
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [context.extensionUri],
+    };
+  //  Force update the badge the moment the user opens the panel
+    const stats = v005.getStats(storage);
+    webviewView.badge = stats.total > 0
+      ? { value: stats.total, tooltip: `${stats.total} Logic Anchors` }
+      : {value : 0 , tooltip : ""};
+
+// Show total if available, otherwise orphans
+if (stats.total > 0) {
+    webviewView.badge = { value: stats.total, tooltip: `${stats.total} Logic Anchors` };
+} else if (stats.orphans > 0) {
+    webviewView.badge = { value: stats.orphans, tooltip: `${stats.orphans} Orphans detected` };
+} else {
+    webviewView.badge = undefined;
+}
     // Initial load
-    refreshSidebar();
+    refreshSidebar();
+    // If the user clicks away and comes back, refresh immediately
+      webviewView.onDidChangeVisibility(() => {
+        if (webviewView.visible) {
+          refreshSidebar();
+        }
+      });
+    webviewView.webview.onDidReceiveMessage(async data => {
+      console.log('Received from Webview:', data);
+      const editor = vscode.window.activeTextEditor;
 
-    webviewView.webview.onDidReceiveMessage(async data => {
-      console.log('Received from Webview:', data);
-      const editor = vscode.window.activeTextEditor;
-
-      switch (data.command) {
-        // v0.0.5 feature: Inline Edit
+      switch (
+        data.command // v0.0.5 feature: Inline Edit
+      ) {
         case 'editNote':
           const editSuccessful = await v005.editInsight(storage, data.file, data.line);
 
           if (editSuccessful) {
-            refreshSidebar();
-            //  Refresh the decorations in the code editor
+            refreshSidebar(); //  Refresh the decorations in the code editor
             const editor = vscode.window.activeTextEditor;
             if (editor) {
               updateDecorations(editor);
-            }
-            //  Send the toast
+            } //  Send the toast
             webviewView.webview.postMessage({
               command: 'showToast',
               text: 'Insight updated live.',
@@ -133,13 +189,11 @@ function activate(context) {
             });
           }
           break;
-
-        // v0.0.5 feature (export to json)
+          // v0.0.5 feature (export to json)
         case 'exportJson':
           await v005.exportToJSON(storage);
           break;
-        // v0.0.5 feature(copyMarkdown)
-        case 'copyMarkdown':
+          case 'copyMarkdown':
           await v005.copyAsMarkdown(storage, data.file, data.line);
           webviewView.webview.postMessage({
             command: 'showToast',
@@ -147,45 +201,47 @@ function activate(context) {
             type: 'success',
           });
           break;
+        // v0.0.5 silent background process
+        case 'init':
+          const initStats = v005.getStats(storage);
+          webviewView.webview.postMessage({
+            command: 'updateStats',
+            stats: initStats,
+          });
+          break;
 
-// v0.0.5 silent background process
-      case 'init':
-    const initStats = v005.getStats(storage);
-    webviewView.webview.postMessage({
-        command: 'updateStats',
-        stats: initStats,
-    });
-    break;
-
-case 'refresh':
-    await validateAnchorsOnStart(storage, root);
-    refreshSidebar();
-    const refreshStats = v005.getStats(storage);
-    webviewView.webview.postMessage({
-        command: 'updateStats',
-        stats: refreshStats,
-    });
-    webviewView.webview.postMessage({
-        command: 'showToast',
-        text: 'Registry synced.',
-        type: 'success',
-    });
-    break;
-    // v0.0.5 feature (provides total stats of insights )
-case 'getStats':
-    const stats = v005.getStats(storage);
-    webviewView.webview.postMessage({
-        command: 'updateStats',
-        stats: stats,
-    });
-    break;
+        case 'refresh':
+          await validateAnchorsOnStart(storage, root);
+          refreshSidebar();
+          const refreshStats = v005.getStats(storage);
+          webviewView.webview.postMessage({
+            command: 'updateStats',
+            stats: refreshStats,
+          });
+          webviewView.webview.postMessage({
+            command: 'showToast',
+            text: 'Registry synced.',
+            type: 'success',
+          });
+          break; // v0.0.5 feature (provides total stats of insights )
+        case 'getStats':
+          const stats = v005.getStats(storage);
+          webviewView.webview.postMessage({
+            command: 'updateStats',
+            stats: stats,
+          });
+          break;
 
         case 'deleteNote':
-          storage.deleteNote(data.file, data.line);
+          // Remove from storage
+          await storage.deleteNote(data.file, data.line);
+          // Then refresh the HTML list
           refreshSidebar();
+          // Update editor gutter/decorations
           if (editor) {
             updateDecorations(editor);
           }
+          // Show the toast
           webviewView.webview.postMessage({
             command: 'showToast',
             text: 'Insight removed.',
@@ -244,54 +300,69 @@ case 'getStats':
         case 'clearAll':
           vscode.commands.executeCommand('logicanchor.clearAll');
           break;
+
+        // v0.0.6 feature
+        case 'cleanupOrphans':
+          await v006.cleanupOrphans(storage);
+          pendingNotesCache= {};
+          refreshSidebar(); // Force the UI to update immediately
+          break;
       }
-    });
-  },
+    });
+  },
 };
 
-  //  EVENT LISTENERS
-  // ADD Note COMMANDS (Updated with Categories)
-  let addNoteCommand = vscode.commands.registerCommand('logicanchor.addNote', async () => {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) return; // Pick Category First
+  // All Working Event Listeners
+let addNoteCommand = vscode.commands.registerCommand('logicanchor.addNote', async () => {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) return;
 
-    const category = await vscode.window.showQuickPick(
-      ['Logic', 'Bug Fix', 'Warning', 'TODO', 'Optimization'],
-      { placeHolder: 'Select Insight Category' },
-    );
-    if (!category) return; // Exit if user cancels
+  const category = await vscode.window.showQuickPick(
+    ['Logic', 'Bug Fix', 'Warning', 'TODO', 'Optimization'],
+    { placeHolder: 'Select Insight Category' },
+  );
+  if (!category) return;
 
-    const noteText = await vscode.window.showInputBox({
-      prompt: `What is the 'Why' behind this ${category}?`,
-      placeHolder: 'Explain the logic for future developers...',
-    });
-
-    if (noteText) {
-      const line = editor.selection.active.line;
-      const filePath = vscode.workspace.asRelativePath(editor.document.uri);
-
-      storage.saveNote(filePath, line, noteText, category);
-      updateDecorations(editor); // Refresh Sidebar Content
-
-      if (currentWebviewView) {
-        currentWebviewView.webview.html = getSidebarContent(
-          currentWebviewView.webview,
-          context.extensionUri,
-          storage.getAllNotes(),
-        ); // This triggers new sliding toast!
-
-        currentWebviewView.webview.postMessage({
-          command: 'showToast',
-          text: `${category} pinned successfully!`,
-          type: 'success',
-        });
-      } // Standard VS Code notification
-
-      vscode.window.showInformationMessage(`LogicAnchor: ${category} Saved.`);
-    }
+  const noteText = await vscode.window.showInputBox({
+    prompt: `What is the 'Why' behind this ${category}?`,
+    placeHolder: 'Explain the logic for future developers...',
   });
 
-  // Clear All Notes Command
+  if (noteText) {
+    const line = editor.selection.active.line;
+    const filePath = vscode.workspace.asRelativePath(editor.document.uri);
+
+    // Save to storage
+    storage.saveNote(filePath, line, noteText, category);
+    // Update editor visuals
+    updateDecorations(editor);
+    refreshSidebar();
+    if (currentWebviewView) {
+      //  Refresh Sidebar HTML
+      currentWebviewView.webview.html = getSidebarContent(
+        currentWebviewView.webview,
+        context.extensionUri,
+        storage.getAllNotes(),
+      );
+      // Explicitly push updated stats to update the "Total Insight" count
+      const latestStats = v005.getStats(storage);
+      currentWebviewView.webview.postMessage({
+        command: 'updateStats',
+        stats: latestStats,
+      });
+      //  Trigger the toast notification
+      currentWebviewView.webview.postMessage({
+        command: 'showToast',
+        text: `${category} pinned successfully!`,
+        type: 'success',
+      });
+    }
+    vscode.window.showInformationMessage(`LogicAnchor: ${category} Saved.`);
+  }
+});
+
+
+// Clear All Notes Command
   let clearNotesCommand = vscode.commands.registerCommand('logicanchor.clearAll', async () => {
     const confirmation = await vscode.window.showWarningMessage(
       'Are you sure you want to delete ALL logic anchors in this workspace?',
@@ -300,182 +371,240 @@ case 'getStats':
     );
 
     if (confirmation === 'Yes, Clear All') {
-      storage.clearAllNotes(); // Refresh the UI
-
-      if (currentWebviewView) {
-        currentWebviewView.webview.html = getSidebarContent(
-          currentWebviewView.webview,
-          context.extensionUri,
-          storage.getAllNotes(),
-        );
-      } // Clear gutter icons in all visible editors
+      // Wipe the storage
+      await storage.clearAllNotes();
+      pendingNotesCache = {};
+      refreshSidebar();
+      // Clear gutter icons in all visible editors
       vscode.window.visibleTextEditors.forEach(editor => updateDecorations(editor));
       vscode.window.showInformationMessage('LogicAnchor: All insights have been cleared.');
     }
   });
 
-  // This validates anchors on activation to mark orphans v0.0.3
-  async function validateAnchorsOnStart(storageManager, rootPath) {
-    const allNotes = storageManager.getAllNotes();
-    let changedAny = false;
+  // v0.0.6 feature
+let hardResetCommand = vscode.commands.registerCommand('logicanchor.hardReset', async () => {
+  const confirmation = await vscode.window.showWarningMessage(
+    'This will WIPE ALL DATA and reset the badge. Are you sure?',
+    { modal: true },
+    'Yes, Reset Everything',
+  );
 
-    for (const filePath in allNotes) {
-      try {
-        const fullPath = path.join(rootPath, filePath);
-
-        // Skip if file no longer exists on disk
-        if (!fs.existsSync(fullPath)) {
-          continue;
-        }
-
-        const uri = vscode.Uri.file(fullPath);
-        const doc = await vscode.workspace.openTextDocument(uri);
-        const fileNotes = allNotes[filePath];
-        let fileChanged = false;
-
-        Object.keys(fileNotes).forEach(lineStr => {
-          const line = parseInt(lineStr);
-          const note = fileNotes[lineStr];
-
-          /**
-           * ORPHAN LOGIC:
-           * 1. Line number is beyond the current document length.
-           * 2. The specific line is now empty or just whitespace (meaning the code moved/deleted).
-           * 3. The entire document is empty.
-           */
-          const isLineOutOfBounds = line >= doc.lineCount;
-          const isLineEmpty = !isLineOutOfBounds && doc.lineAt(line).isEmptyOrWhitespace;
-          const isDocEmpty = doc.getText().trim() === '';
-
-          const shouldBeOrphan = isLineOutOfBounds || isLineEmpty || isDocEmpty;
-
-          if (note.isOrphan !== shouldBeOrphan) {
-            note.isOrphan = shouldBeOrphan;
-            fileChanged = true;
-            changedAny = true;
-          }
-        });
-
-        if (fileChanged) {
-          storageManager.updateFileNotes(filePath, fileNotes);
-        }
-      } catch (e) {
-        console.error('LogicAnchor: Error validating anchors for file:', filePath, e);
-      }
+  if (confirmation === 'Yes, Reset Everything') {
+    await storage.clearAllNotes(); // Wipes disk
+    pendingNotesCache = {}; // This clears memory
+    if (currentWebviewView) {
+      currentWebviewView.badge = undefined; // Removes the "1"
+      refreshSidebar();
     }
-
-    return changedAny; // Return true if we need to trigger a UI refresh
+    vscode.window.showInformationMessage('LogicAnchor: Storage has been hard reset.');
   }
+});
+context.subscriptions.push(hardResetCommand);
 
-  //  pushing it to subscriptions!
-  context.subscriptions.push(clearNotesCommand);
+  // This validates anchors on activation to mark orphans v0.0.3
+  async function validateAnchorsOnStart(storageManager, rootPath) {
+    const allNotes = storageManager.getAllNotes();
+    let changedAny = false;
 
-  //  REGISTRATION
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider('logicAnchorView', sidebarProvider),
-    addNoteCommand,
-  );
+    for (const filePath in allNotes) {
+      try {
+        const fullPath = path.join(rootPath, filePath);
 
-  validateAnchorsOnStart(storage, root).then(() => {
-    refreshSidebar();
-    if (vscode.window.activeTextEditor) updateDecorations(vscode.window.activeTextEditor);
-  });
+        // Skip if file no longer exists on disk
+        if (!fs.existsSync(fullPath)) {
+          continue;
+        }
 
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument(event => {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor || event.document !== editor.document) return;
+        const uri = vscode.Uri.file(fullPath);
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const fileNotes = allNotes[filePath];
+        let fileChanged = false;
 
-      const filePath = vscode.workspace.asRelativePath(editor.document.uri, false);
-      let notes = storage.getAllNotes()[filePath];
+        Object.keys(fileNotes).forEach(lineStr => {
+          const line = parseInt(lineStr);
+          const note = fileNotes[lineStr];
 
-      if (notes && Object.keys(notes).length > 0) {
-        let changed = false;
-        const isFileEmpty = event.document.getText().trim() === '';
+          /**
+           * ORPHAN LOGIC:
+           * 1. Line number is beyond the current document length.
+           * 2. The specific line is now empty or just whitespace (meaning the code moved/deleted).
+           * 3. The entire document is empty.
+           */
+          const isLineOutOfBounds = line >= doc.lineCount;
+          const isLineEmpty = !isLineOutOfBounds && doc.lineAt(line).isEmptyOrWhitespace;
+          const isDocEmpty = doc.getText().trim() === '';
 
-        event.contentChanges.forEach(change => {
-          const startLine = change.range.start.line;
-          const endLine = change.range.end.line;
-          const lineDelta = change.text.split('\n').length - 1 - (endLine - startLine);
+          const shouldBeOrphan = isLineOutOfBounds || isLineEmpty || isDocEmpty;
 
-          const newNotes = {};
-          Object.keys(notes).forEach(lineStr => {
-            const line = parseInt(lineStr);
-            const note = notes[lineStr];
+          if (note.isOrphan !== shouldBeOrphan) {
+            note.isOrphan = shouldBeOrphan;
+            fileChanged = true;
+            changedAny = true;
+          }
+        });
 
-            if (isFileEmpty) {
-              note.isOrphan = true;
-              newNotes[lineStr] = note;
-              changed = true;
-            } else if (line >= startLine && line <= endLine && lineDelta < 0) {
-              note.isOrphan = true;
-              newNotes[lineStr] = note;
-              changed = true;
-            } else if (line > startLine && lineDelta !== 0) {
-              newNotes[line + lineDelta] = note;
-              changed = true;
-            } else {
-              newNotes[lineStr] = note;
-            }
-          });
-          notes = newNotes;
-        });
+        if (fileChanged) {
+          storageManager.updateFileNotes(filePath, fileNotes);
+        }
+      } catch (e) {
+        console.error('LogicAnchor: Error validating anchors for file:', filePath, e);
+      }
+    }
 
-        if (changed) {
-          // Using here the debounced function instead of direct storage update
-          debouncedStorageUpdate(filePath, notes);
-        }
+    return changedAny; // Return true if we need to trigger a UI refresh
+  }
+
+  // pushing it to subscriptions!
+  context.subscriptions.push(clearNotesCommand);
+
+  //  REGISTRATION
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('logicAnchorView', sidebarProvider),
+    addNoteCommand,
+  );
+
+  validateAnchorsOnStart(storage, root).then(() => {
+    refreshSidebar();
+    if (vscode.window.activeTextEditor) updateDecorations(vscode.window.activeTextEditor);
+  });
+
+context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument(event => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor || event.document !== editor.document) return;
+
+      const filePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+
+      let notes = pendingNotesCache[filePath] || storage.getAllNotes()[filePath];
+
+      if (notes) {
+        let changed = false;
+        const isFileEmpty = event.document.getText().trim() === '';
+
+      event.contentChanges.forEach(change => {
+        const startLine = change.range.start.line;
+        const endLine = change.range.end.line;
+        const lineDelta = change.text.split('\n').length - 1 - (endLine - startLine);
+
+        const newNotes = {};
+        Object.keys(notes).forEach(lineStr => {
+          const line = parseInt(lineStr);
+          const note = notes[lineStr];
+
+          if (isFileEmpty) {
+            note.isOrphan = true;
+            newNotes[lineStr] = note;
+            changed = true;
+          }
+          // If it's just a backspace at the end, this keep the note.
+          else if (line >= startLine && line <= endLine && lineDelta < 0) {
+            const isFullLineDelete =
+              change.range.start.character === 0 && change.range.end.character >= 999;
+            if (isFullLineDelete || startLine !== endLine) {
+              note.isOrphan = true;
+              changed = true;
+            }
+            newNotes[lineStr] = note;
+          }
+          //  If press Enter ABOVE the insight line
+          else if (line > startLine && lineDelta !== 0) {
+            newNotes[line + lineDelta] = note;
+            changed = true;
+          }
+          //  THE "MIDDLE & RIGHT" FIX
+          else if (line === startLine && lineDelta > 0) {
+            const lineAfterChange = event.document.lineAt(startLine).text;
+            const cursorPosition = change.range.start.character;
+            if (cursorPosition >= lineAfterChange.length && lineAfterChange.trim() !== '') {
+              // RIGHT SIDE: Keep it here
+              newNotes[lineStr] = note;
+            } else {
+              newNotes[line + lineDelta] = note;
+              changed = true;
+            }
+          }
+          else {
+            newNotes[lineStr] = note;
+          }
+        });
+        notes = newNotes;
+      });
+
+
+if (changed) {
+        pendingNotesCache[filePath] = notes; // Keep in memory
+        updateDecorations(editor, notes);    // Update visuals immediately (snappy!)
+        debouncedStorageUpdate(filePath, notes); // Save to disk and update stats later
       }
+      }
+    }),
+  );
 
-      // Decorations stay real-time so the icons move while typing!
-      updateDecorations(editor);
-    }),
-  );
+  // Command to open the github repo
+  let openRepoCommand = vscode.commands.registerCommand('logicanchor.openRepo', () => {
+    vscode.env.openExternal(vscode.Uri.parse('https://github.com/byllzz/logicanchor-vscode'));
+  });
 
-  // Command to ope the github repo
-  let openRepoCommand = vscode.commands.registerCommand('logicanchor.openRepo', () => {
-    vscode.env.openExternal(vscode.Uri.parse('https://github.com/byllzz/logicanchor-vscode'));
-  });
+  // Command to open the Issues page
+  const reportIssue = vscode.commands.registerCommand('logicanchor.reportIssue', () => {
+    vscode.env.openExternal(
+      vscode.Uri.parse('https://github.com/byllzz/logicanchor-vscode/issues'),
+    );
+  });
 
-  // Command to open the Issues page
-  const reportIssue = vscode.commands.registerCommand('logicanchor.reportIssue', () => {
-    vscode.env.openExternal(
-      vscode.Uri.parse('https://github.com/byllzz/logicanchor-vscode/issues'),
-    );
-  });
+  // subscriptions
+  context.subscriptions.push(openRepoCommand, reportIssue);
 
-  // subscriptions
-  context.subscriptions.push(openRepoCommand, reportIssue);
-
-  //  this ensure icons appear when switching between open tabs
-  context.subscriptions.push(
+  //  this ensure icons appear when switching between open tabs
+  context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(editor => {
       if (editor) {
         updateDecorations(editor);
       }
     }),
+    vscode.commands.registerCommand('logicanchor.nextInsight', () => {
+      v006.navigateInsights(storage, 'next');
+    }),
+    vscode.commands.registerCommand('logicanchor.prevInsight', () => {
+      v006.navigateInsights(storage, 'prev');
+    }),
+    vscode.commands.registerCommand('logicanchor.generateMap', () => {
+      v006.generateLogicMap(storage, root);
+    }),
+    // 5. Health Check Command
+    vscode.commands.registerCommand('logicanchor.projectHealth', () => {
+      v006.showProjectHealth(storage);
+    }),
+    // 6. Cleanup Command
+    vscode.commands.registerCommand('logicanchor.cleanupOrphans', () => {
+        v006.cleanupOrphans(storage);
+    }),
+    vscode.commands.registerCommand('logicanchor.refreshSidebar', () => {
+      // FIX: Change 'updateSidebar' to 'refreshSidebar'
+      if (typeof refreshSidebar === 'function') {
+        refreshSidebar();
+        vscode.window.setStatusBarMessage('🔄 Sidebar Synced', 2000);
+      } else {
+        console.error('LogicAnchor: refreshSidebar function not found!');
+      }
+    }),
   );
 
-
-  // v0.0.5 features
-
-  // Registering the Export Command
-  let exportCmd = vscode.commands.registerCommand("logicanchor.export" , ()=> {
-    v005.exportToJSON(storage);
-  });
-
-}
-
+  // Registering the Export Command
+  let exportCmd = vscode.commands.registerCommand("logicanchor.export" , ()=> {
+    v005.exportToJSON(storage);
+  });
+}; // activate function end here
 function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 function deactivate() {}
 module.exports = { activate, deactivate };

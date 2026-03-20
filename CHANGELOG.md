@@ -5,8 +5,36 @@ All notable changes to **LogicAnchor** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.6] - 2026-03-20
+
+##  UI Overhaul
+
+- **Glassmorphic Design:**
+  Transitioned to a premium, semi-transparent interface that feels native to the VS Code ecosystem.
+
+- **Sticky Interaction Layer:**
+  The search bar and category statistics now remain pinned to the top for seamless navigation in large codebases.
+
+- **Animated File Grouping:**
+  Improved file-based organization with smooth chevron transitions and "collapsed" states to reduce cognitive load.
 
 
+## Gutter & Anchor Improvements
+
+- **Minimalist Gutter Dots:**
+  Replaced bulky icons with sleek, category-colored dots in the editor gutter for a non-intrusive "Ghost Preview" experience.
+
+- **Orphan Recovery Logic:**
+  Improved the "Re-anchor" workflow—orphaned notes now feature a distinct visual warning and a one-click fix to snap them to the current cursor position.
+
+## Technical Refinement
+
+- **Performance Optimization:**
+  Refined the Markdown rendering engine to handle high-frequency UI updates without lag.
+
+- **Reliable Messaging:**
+  Hardened the communication bridge between the sidebar and the extension host for smoother note editing and deletion.
+---
 ## [0.0.5] - 2026-03-18
 
 ### New Features

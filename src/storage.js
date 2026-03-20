@@ -47,7 +47,7 @@ class StorageManager {
 
       // Update the note data
       noteData.isOrphan = false;
-      noteData.timestamp = Date.now(); // Optional - update timestamp on re-anchor
+      noteData.timestamp = Date.now(); 
 
       // Move to new line and delete old entry
       data[fileRelativePath][newLine] = noteData;
@@ -96,9 +96,15 @@ class StorageManager {
     fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
   }
 
+
+// v0.0.6 Update..
   updateFileNotes(filePath, fileNotes) {
     const allNotes = this.getAllNotes();
-    allNotes[filePath] = fileNotes;
+    if (!fileNotes || Object.keys(fileNotes).length === 0) {
+        delete allNotes[filePath];
+    } else {
+        allNotes[filePath] = fileNotes;
+    }
     this.saveToDisk(allNotes);
   }
 }
