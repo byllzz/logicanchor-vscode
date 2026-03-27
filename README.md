@@ -69,7 +69,7 @@ By anchoring insights, design decisions, and logic explanations to **specific li
 
 ---
 
-✨ *Designed to keep your logic, thoughts, and explanations seamlessly connected to your code.*
+ *Designed to keep your logic, thoughts, and explanations seamlessly connected to your code.*
 
 ---
 
