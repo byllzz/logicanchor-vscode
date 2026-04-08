@@ -218,7 +218,4 @@ Contributions are welcome.
 3. Submit a **Pull Request**
 
 ---
-
----
-
 *Created by [Bilal Malik (byllzz)](https://github.com/byllzz)*
