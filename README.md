@@ -217,5 +217,3 @@ Contributions are welcome.
 2. Create a new branch
 3. Submit a **Pull Request**
 
----
-*Created by [Bilal Malik (byllzz)](https://github.com/byllzz)*
