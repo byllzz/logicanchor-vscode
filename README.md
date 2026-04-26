@@ -17,6 +17,8 @@
   </a>
 </p>
 
+[![Publisher](https://img.shields.io/badge/Publisher-Bilal%20Malik-9B72FF?style=flat)](https://marketplace.visualstudio.com/publishers/bilalmlkdev)
+
 <p align="center">
 Pin the <b>“Why”</b> behind your code directly inside your editor.
 </p>
