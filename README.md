@@ -71,8 +71,8 @@ By anchoring insights, design decisions, and logic explanations to **specific li
 
 ---
 
-✨ *Designed to keep your logic, thoughts, and explanations seamlessly connected to your code.*
-
+ *Designed to keep your logic, thoughts, and explanations seamlessly connected to your code.*
+ 
 ---
 
 ##  Usage
@@ -214,13 +214,7 @@ If you find a bug or have a suggestion for a **new feature**, please open an **I
 # Contributing
 
 Contributions are welcome.
-
 1. Fork the repository
 2. Create a new branch
 3. Submit a **Pull Request**
 
----
-
----
-
-*Created by [Bilal Malik (byllzz)](https://github.com/byllzz)*
