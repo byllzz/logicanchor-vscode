@@ -72,7 +72,7 @@ By anchoring insights, design decisions, and logic explanations to **specific li
 ---
 
  *Designed to keep your logic, thoughts, and explanations seamlessly connected to your code.*
- 
+
 ---
 
 ##  Usage
@@ -106,7 +106,7 @@ A dedicated **sidebar panel** lets you:
 
 ---
 
-## 🔗 Deep Linking
+##  Deep Linking
 
 Click any insight in the registry to **jump instantly to the file and line where it was created**.
 

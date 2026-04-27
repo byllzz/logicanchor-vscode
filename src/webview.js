@@ -469,7 +469,7 @@ function getSidebarContent(webview, extensionUri, notes) {
     }
 
     .btn-primary {
-        background: #9B72FF;
+        background:#9B72FF;
         color: var(--vscode-button-foreground);
         padding: 6px 14px;
         border-radius: var(--radius-sm);
